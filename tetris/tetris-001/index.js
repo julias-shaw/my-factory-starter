@@ -40,6 +40,7 @@ let currentPiece = null;
 let score = 0;
 let lines = 0;
 let level = 1;
+let gameOver = false;
 
 function randomPiece() {
   const names = Object.keys(SHAPES);
@@ -57,10 +58,12 @@ function randomPiece() {
 
 function spawnPiece() {
   currentPiece = randomPiece();
+  if (!fits(currentPiece)) {
+    gameOver = true;
+  }
 }
 
-// Boundary check for the current piece. Full collision detection with the
-// board comes in the next task.
+// Collision check against the board boundaries and locked cells.
 function fits(piece) {
   for (let r = 0; r < piece.shape.length; r++) {
     for (let c = 0; c < piece.shape[r].length; c++) {
@@ -68,6 +71,7 @@ function fits(piece) {
       const x = piece.x + c;
       const y = piece.y + r;
       if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) return false;
+      if (y >= 0 && board[y][x]) return false;
     }
   }
   return true;
@@ -89,7 +93,16 @@ function moveRight() {
 }
 
 function moveDown() {
-  return movePiece(0, 1);
+  const candidate = { ...currentPiece, y: currentPiece.y + 1 };
+  if (fits(candidate)) {
+    currentPiece = candidate;
+    return true;
+  }
+  lockPiece();
+  const cleared = clearLines();
+  updateScore(cleared);
+  spawnPiece();
+  return true;
 }
 
 function rotate(dir) {
@@ -111,6 +124,39 @@ function rotate(dir) {
     }
   }
   return false;
+}
+
+function lockPiece() {
+  for (let r = 0; r < currentPiece.shape.length; r++) {
+    for (let c = 0; c < currentPiece.shape[r].length; c++) {
+      if (!currentPiece.shape[r][c]) continue;
+      const x = currentPiece.x + c;
+      const y = currentPiece.y + r;
+      if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
+        board[y][x] = 1;
+      }
+    }
+  }
+}
+
+function clearLines() {
+  let cleared = 0;
+  for (let r = BOARD_HEIGHT - 1; r >= 0; r--) {
+    if (board[r].every((cell) => cell !== 0)) {
+      board.splice(r, 1);
+      board.unshift(Array(BOARD_WIDTH).fill(0));
+      cleared++;
+      r++;
+    }
+  }
+  return cleared;
+}
+
+function updateScore(cleared) {
+  const points = [0, 40, 100, 300, 1200];
+  score += (points[cleared] || 0) * level;
+  lines += cleared;
+  level = Math.floor(lines / 10) + 1;
 }
 
 function getDisplayCell(r, c) {
@@ -164,6 +210,10 @@ function draw() {
 
   rows.push(`${bottomBorder}  ${sidePanel[BOARD_HEIGHT + 1] || ''}`);
 
+  if (gameOver) {
+    rows.push('       GAME OVER       ');
+  }
+
   while (rows.length > MAX_ROWS) {
     rows.pop();
   }
@@ -187,6 +237,7 @@ if (process.stdin.isTTY) {
     if (key === '\u0003' || key === 'q' || key === 'Q') {
       cleanup();
     }
+    if (gameOver) return;
 
     let changed = false;
     switch (key) {

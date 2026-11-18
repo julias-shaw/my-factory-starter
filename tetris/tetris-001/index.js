@@ -8,6 +8,8 @@ const process = require('process');
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
 const MAX_ROWS = 24;
+const BASE_GRAVITY_MS = 800;
+const LOCK_DELAY_MS = 500;
 
 const ESC = '\x1b';
 const CLEAR = `${ESC}[2J${ESC}[H`;
@@ -41,6 +43,9 @@ let score = 0;
 let lines = 0;
 let level = 1;
 let gameOver = false;
+let paused = false;
+let gravityTimer = null;
+let lockTimer = null;
 
 function randomPiece() {
   const names = Object.keys(SHAPES);
@@ -93,16 +98,66 @@ function moveRight() {
 }
 
 function moveDown() {
+  if (lockTimer) {
+    clearTimeout(lockTimer);
+    lockTimer = null;
+  }
   const candidate = { ...currentPiece, y: currentPiece.y + 1 };
   if (fits(candidate)) {
     currentPiece = candidate;
     return true;
   }
+  lockAndSpawn();
+  return true;
+}
+
+function lockAndSpawn() {
   lockPiece();
   const cleared = clearLines();
   updateScore(cleared);
   spawnPiece();
-  return true;
+  draw();
+  if (gameOver) endGame();
+}
+
+function tick() {
+  if (gameOver || paused || !currentPiece) return;
+
+  const candidate = { ...currentPiece, y: currentPiece.y + 1 };
+  if (fits(candidate)) {
+    currentPiece = candidate;
+    draw();
+    return;
+  }
+
+  if (!lockTimer) {
+    lockTimer = setTimeout(() => {
+      lockTimer = null;
+      if (gameOver || paused || !currentPiece) return;
+      const c = { ...currentPiece, y: currentPiece.y + 1 };
+      if (!fits(c)) {
+        lockAndSpawn();
+      }
+    }, LOCK_DELAY_MS);
+  }
+}
+
+function startGravity() {
+  if (gravityTimer) clearInterval(gravityTimer);
+  const speed = Math.max(100, BASE_GRAVITY_MS - (level - 1) * 60);
+  gravityTimer = setInterval(tick, speed);
+}
+
+function endGame() {
+  if (gravityTimer) {
+    clearInterval(gravityTimer);
+    gravityTimer = null;
+  }
+  if (lockTimer) {
+    clearTimeout(lockTimer);
+    lockTimer = null;
+  }
+  draw();
 }
 
 function rotate(dir) {
@@ -222,6 +277,8 @@ function draw() {
 }
 
 function cleanup() {
+  if (gravityTimer) clearInterval(gravityTimer);
+  if (lockTimer) clearTimeout(lockTimer);
   process.stdout.write(SHOW_CURSOR);
   process.stdin.setRawMode(false);
   process.stdin.pause();
@@ -261,6 +318,17 @@ if (process.stdin.isTTY) {
       case 'U':
         changed = rotate('cw');
         break;
+      case 'p':
+      case 'P':
+        paused = !paused;
+        if (paused) {
+          if (gravityTimer) clearInterval(gravityTimer);
+          if (lockTimer) { clearTimeout(lockTimer); lockTimer = null; }
+        } else {
+          startGravity();
+        }
+        changed = true;
+        break;
       default:
         break;
     }
@@ -274,6 +342,11 @@ if (process.stdin.isTTY) {
 
 spawnPiece();
 draw();
+if (gameOver) {
+  endGame();
+} else {
+  startGravity();
+}
 
 if (!process.stdin.isTTY) {
   process.stdout.write(SHOW_CURSOR + '\n');

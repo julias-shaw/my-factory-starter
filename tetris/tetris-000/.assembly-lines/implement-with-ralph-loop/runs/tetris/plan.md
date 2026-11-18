@@ -1,5 +1,5 @@
 - [x] Set up a Node.js terminal program that starts with `npm start` and displays an empty Tetris board with a compact score and controls layout within 24 rows.
-- [ ] Add the seven tetromino shapes, randomized piece generation, and rendering of an active piece on the board.
+- [x] Add the seven tetromino shapes, randomized piece generation, and rendering of an active piece on the board.
 - [ ] Add raw keyboard input for left and right movement with collision checks against the board edges and occupied cells.
 - [ ] Add timed falling, piece locking, and spawning of the next piece, keeping the game running between keyboard events.
 - [ ] Add piece rotation with collision checks and reasonable wall adjustments.

@@ -1,0 +1,71 @@
+#!/usr/bin/env elixir
+
+# Like Pi, wait for piped input to end before starting.
+IO.read(:stdio, :eof)
+
+# Every scenario gets its own executable and call records.
+call = length(Path.wildcard(Path.join(__DIR__, "call-*.args"))) + 1
+File.write!(Path.join(__DIR__, "call-#{call}.args"), inspect(System.argv()))
+File.write!(Path.join(__DIR__, "call-#{call}.cwd"), File.cwd!())
+
+read_setting = fn name ->
+  case File.read(Path.join(__DIR__, name)) do
+    {:ok, text} -> text
+    _ -> ""
+  end
+end
+
+mode = read_setting.("mode")
+preamble = read_setting.("preamble")
+if preamble != "", do: IO.puts(preamble)
+
+if mode == "prose-result" do
+  IO.puts("I have done some work, but have no result to report.")
+else
+  plan = Path.join(File.cwd!(), ".factory/plan.md")
+
+  {complete, task} =
+    cond do
+      not File.exists?(plan) ->
+        File.mkdir_p!(Path.dirname(plan))
+        text = if mode == "prose-plan", do: "First do alpha, then do beta.\n", else: "- [ ] alpha\n- [ ] beta\n"
+        File.write!(plan, text)
+        {false, nil}
+
+      mode == "prose-plan" ->
+        case File.read!(plan) do
+          "First do alpha, then do beta.\n" ->
+            File.write!("alpha.txt", "Work for alpha\n")
+            File.write!(plan, "Alpha is finished. Beta is next.\n")
+            {false, "alpha"}
+
+          "Alpha is finished. Beta is next.\n" ->
+            File.write!("beta.txt", "Work for beta\n")
+            File.write!(plan, "All work is finished.\n")
+            {false, "beta"}
+
+          "All work is finished.\n" ->
+            {true, nil}
+        end
+
+      true ->
+        contents = File.read!(plan)
+        case Regex.run(~r/^- \[ \] (.+)$/m, contents) do
+          [line, task] ->
+            product = if mode == "sentinel", do: "SENTINEL", else: "#{task}.txt"
+            File.write!(product, "Work for #{task}\n")
+            File.write!(plan, String.replace(contents, line, "- [x] #{task}", global: false))
+            {false, task}
+
+          nil ->
+            # Exercise a final plan update after the last work commit.
+            if File.exists?("alpha.txt") and not String.ends_with?(contents, "\nAll work recorded.\n") do
+              File.write!(plan, contents <> "\nAll work recorded.\n")
+            end
+            {true, nil}
+        end
+    end
+
+  result = if task, do: %{"complete" => complete, "task" => task}, else: %{"complete" => complete}
+  IO.puts(IO.iodata_to_binary(:json.encode(result)))
+end

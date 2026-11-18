@@ -62,7 +62,16 @@ function rotatePiece(board, piece) {
   return false;
 }
 
-function advancePiece(board, piece, random = Math.random) {
+function clearRows(board) {
+  const remaining = board.filter(row => row.some(cell => cell === null));
+  const cleared = board.length - remaining.length;
+  board.splice(0, board.length,
+    ...Array.from({ length: cleared }, () => Array(BOARD_WIDTH).fill(null)),
+    ...remaining);
+  return cleared;
+}
+
+function advancePiece(board, piece, random = Math.random, stats = { score: 0 }) {
   if (canPlace(board, piece, piece.x, piece.y + 1)) {
     piece.y += 1;
     return piece;
@@ -73,15 +82,17 @@ function advancePiece(board, piece, random = Math.random) {
       if (cell) board[piece.y + dy][piece.x + dx] = piece.type;
     });
   });
+  const cleared = clearRows(board);
+  stats.score += [0, 100, 300, 500, 800][cleared];
   const next = createPiece(random);
   return canPlace(board, next) ? next : null;
 }
 
-function hardDrop(board, piece, random = Math.random) {
+function hardDrop(board, piece, random = Math.random, stats = { score: 0 }) {
   while (canPlace(board, piece, piece.x, piece.y + 1)) {
     piece.y += 1;
   }
-  return advancePiece(board, piece, random);
+  return advancePiece(board, piece, random, stats);
 }
 
 function render(board, score = 0, activePiece = null) {
@@ -109,13 +120,14 @@ function render(board, score = 0, activePiece = null) {
 
 function main() {
   const board = createBoard();
+  const stats = { score: 0 };
   let piece = createPiece();
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    process.stdout.write(`${render(board, 0, piece)}\n`);
+    process.stdout.write(`${render(board, stats.score, piece)}\n`);
     return;
   }
 
-  const draw = () => process.stdout.write(`\x1b[H${render(board, 0, piece)}`);
+  const draw = () => process.stdout.write(`\x1b[H${render(board, stats.score, piece)}`);
   const wasRaw = process.stdin.isRaw;
   let fallTimer;
   const cleanup = () => {
@@ -139,7 +151,9 @@ function main() {
     if (piece && dx && movePiece(board, piece, dx)) draw();
     if (piece && key.name === 'up' && rotatePiece(board, piece)) draw();
     if (piece && (key.name === 'down' || key.name === 'space')) {
-      piece = key.name === 'space' ? hardDrop(board, piece) : advancePiece(board, piece);
+      piece = key.name === 'space'
+        ? hardDrop(board, piece, Math.random, stats)
+        : advancePiece(board, piece, Math.random, stats);
       if (!piece) clearInterval(fallTimer);
       draw();
     }
@@ -155,7 +169,7 @@ function main() {
   draw();
   fallTimer = setInterval(() => {
     if (!piece) return;
-    piece = advancePiece(board, piece);
+    piece = advancePiece(board, piece, Math.random, stats);
     if (!piece) clearInterval(fallTimer);
     draw();
   }, 700);
@@ -167,5 +181,5 @@ if (require.main === module) {
 
 module.exports = {
   BOARD_WIDTH, BOARD_HEIGHT, SHAPES, createBoard, createPiece, canPlace, movePiece,
-  rotatePiece, advancePiece, hardDrop, render,
+  rotatePiece, clearRows, advancePiece, hardDrop, render,
 };

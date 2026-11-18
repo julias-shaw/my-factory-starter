@@ -21,16 +21,70 @@ const BR = '╝';
 const H = '═';
 const V = '║';
 const EMPTY = ' ';
+const BLOCK = '█';
+
+const SHAPES = {
+  I: [[1, 1, 1, 1]],
+  O: [[1, 1], [1, 1]],
+  T: [[0, 1, 0], [1, 1, 1]],
+  S: [[0, 1, 1], [1, 1, 0]],
+  Z: [[1, 1, 0], [0, 1, 1]],
+  J: [[1, 0, 0], [1, 1, 1]],
+  L: [[0, 0, 1], [1, 1, 1]],
+};
+
+const PIECE_SYMBOLS = ['█', '▓', '▒', '░', '■', '▤', '▥'];
+
+let board = Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(0));
+let currentPiece = null;
+let score = 0;
+let lines = 0;
+let level = 1;
+
+function randomPiece() {
+  const names = Object.keys(SHAPES);
+  const name = names[Math.floor(Math.random() * names.length)];
+  const shape = SHAPES[name];
+  const symbol = PIECE_SYMBOLS[names.indexOf(name)];
+  return {
+    name,
+    shape,
+    symbol,
+    x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
+    y: 0,
+  };
+}
+
+function spawnPiece() {
+  currentPiece = randomPiece();
+}
+
+function getDisplayCell(r, c) {
+  // Current piece overlay
+  if (currentPiece) {
+    const pr = r - currentPiece.y;
+    const pc = c - currentPiece.x;
+    if (
+      pr >= 0 &&
+      pr < currentPiece.shape.length &&
+      pc >= 0 &&
+      pc < currentPiece.shape[pr].length &&
+      currentPiece.shape[pr][pc]
+    ) {
+      return currentPiece.symbol;
+    }
+  }
+  return board[r][c] ? BLOCK : EMPTY;
+}
 
 function draw() {
   const topBorder = `${TL}${H.repeat(BOARD_WIDTH)}${TR}`;
   const bottomBorder = `${BL}${H.repeat(BOARD_WIDTH)}${BR}`;
-  const emptyRow = `${V}${EMPTY.repeat(BOARD_WIDTH)}${V}`;
 
   const sidePanel = [
-    'SCORE: 0',
-    'LINES: 0',
-    'LEVEL: 1',
+    `SCORE: ${score}`,
+    `LINES: ${lines}`,
+    `LEVEL: ${level}`,
     '',
     'CONTROLS',
     'L/R move',
@@ -45,8 +99,13 @@ function draw() {
   rows.push(`${topBorder}  ${sidePanel[0] || ''}`);
 
   for (let r = 0; r < BOARD_HEIGHT; r++) {
+    let rowContent = V;
+    for (let c = 0; c < BOARD_WIDTH; c++) {
+      rowContent += getDisplayCell(r, c);
+    }
+    rowContent += V;
     const side = sidePanel[r + 1] || '';
-    rows.push(`${emptyRow}  ${side}`);
+    rows.push(`${rowContent}  ${side}`);
   }
 
   rows.push(`${bottomBorder}  ${sidePanel[BOARD_HEIGHT + 1] || ''}`);
@@ -80,6 +139,7 @@ if (process.stdin.isTTY) {
   process.on('SIGTERM', cleanup);
 }
 
+spawnPiece();
 draw();
 
 if (!process.stdin.isTTY) {

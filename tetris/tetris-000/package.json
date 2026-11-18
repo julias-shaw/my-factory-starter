@@ -1,0 +1,12 @@
+{
+  "name": "terminal-tetris",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A compact terminal Tetris game",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

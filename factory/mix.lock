@@ -1,0 +1,4 @@
+%{
+  "cucumber": {:hex, :cucumber, "1.1.1", "ecc5a68e18b41e7ed7882dab628c722eda5590f0897f57993f03b008dcae466b", [:mix], [{:igniter, "~> 0.8.3", [hex: :igniter, repo: "hexpm", optional: true]}, {:nimble_parsec, "~> 1.4", [hex: :nimble_parsec, repo: "hexpm", optional: false]}], "hexpm", "f4567119c6aef9b1d1bebc218209a6a80f0e02dc67a27063b18e861e2aea115e"},
+  "nimble_parsec": {:hex, :nimble_parsec, "1.4.2", "8efba0122db06df95bfaa78f791344a89352ba04baedd3849593bfce4d0dc1c6", [:mix], [], "hexpm", "4b21398942dda052b403bbe1da991ccd03a053668d147d53fb8c4e0efe09c973"},
+}

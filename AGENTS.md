@@ -29,3 +29,8 @@ Skills, in `.agents/skills/` at the repository's root:
 - **implement-fast** — when the student wants you to just build the iteration.
 
 If your harness doesn't load skills, read the skill's `SKILL.md` and follow it.
+
+## Checks
+
+Run the homework suite with `cd factory && mix test` (excludes `@real-agent`).
+Run real-agent examples deliberately with `cd factory && mix test --only real-agent`.

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -e
+factory_source=$(readlink -f -- "$0")
+exec elixir "$(dirname -- "$factory_source")/cli.exs" "$@"

@@ -1,5 +1,7 @@
 'use strict';
 
+const readline = require('node:readline');
+
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
 
@@ -29,6 +31,23 @@ function createBoard() {
   return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
 }
 
+function canPlace(board, piece, x = piece.x, y = piece.y) {
+  return piece.shape.every((row, dy) => row.every((cell, dx) => {
+    if (!cell) return true;
+    const boardX = x + dx;
+    const boardY = y + dy;
+    return boardX >= 0 && boardX < BOARD_WIDTH &&
+      boardY >= 0 && boardY < BOARD_HEIGHT &&
+      board[boardY][boardX] === null;
+  }));
+}
+
+function movePiece(board, piece, dx) {
+  if (!canPlace(board, piece, piece.x + dx, piece.y)) return false;
+  piece.x += dx;
+  return true;
+}
+
 function render(board, score = 0, activePiece = null) {
   const display = board.map(row => [...row]);
   if (activePiece) {
@@ -53,11 +72,49 @@ function render(board, score = 0, activePiece = null) {
 }
 
 function main() {
-  process.stdout.write(`${render(createBoard(), 0, createPiece())}\n`);
+  const board = createBoard();
+  const piece = createPiece();
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    process.stdout.write(`${render(board, 0, piece)}\n`);
+    return;
+  }
+
+  const draw = () => process.stdout.write(`\x1b[H${render(board, 0, piece)}`);
+  const wasRaw = process.stdin.isRaw;
+  const cleanup = () => {
+    process.stdin.removeListener('keypress', onKey);
+    process.removeListener('SIGINT', stop);
+    process.removeListener('SIGTERM', stop);
+    process.stdin.setRawMode(Boolean(wasRaw));
+    process.stdin.pause();
+    process.stdout.write('\x1b[24;1H\n');
+  };
+  const stop = () => {
+    cleanup();
+  };
+  const onKey = (text, key = {}) => {
+    if (key.ctrl && key.name === 'c') {
+      stop();
+      return;
+    }
+    const dx = key.name === 'left' ? -1 : key.name === 'right' ? 1 : 0;
+    if (dx && movePiece(board, piece, dx)) draw();
+  };
+
+  readline.emitKeypressEvents(process.stdin);
+  process.stdin.setRawMode(true);
+  process.stdin.on('keypress', onKey);
+  process.stdin.resume();
+  process.once('SIGINT', stop);
+  process.once('SIGTERM', stop);
+  process.stdout.write('\x1b[2J');
+  draw();
 }
 
 if (require.main === module) {
   main();
 }
 
-module.exports = { BOARD_WIDTH, BOARD_HEIGHT, SHAPES, createBoard, createPiece, render };
+module.exports = {
+  BOARD_WIDTH, BOARD_HEIGHT, SHAPES, createBoard, createPiece, canPlace, movePiece, render,
+};

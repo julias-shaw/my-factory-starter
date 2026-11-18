@@ -237,20 +237,20 @@ function draw() {
   const bottomBorder = `${BL}${H.repeat(BOARD_WIDTH)}${BR}`;
 
   const sidePanel = [
-    `SCORE: ${score}`,
-    `LINES: ${lines}`,
-    `LEVEL: ${level}`,
+    'SCORE  ' + score.toString().padStart(6),
+    'LINES  ' + lines.toString().padStart(6),
+    'LEVEL  ' + level.toString().padStart(6),
     '',
     'CONTROLS',
-    'L/R move',
-    'U rotate',
-    'D soft drop',
-    'P pause',
-    'Q quit',
+    '← →  move',
+    '↑    rotate',
+    '↓    soft drop',
+    'p    pause',
+    'q    quit',
   ];
 
   const rows = [];
-  rows.push('    TERMINAL TETRIS    ');
+  rows.push('  TERMINAL TETRIS  ');
   rows.push(`${topBorder}  ${sidePanel[0] || ''}`);
 
   for (let r = 0; r < BOARD_HEIGHT; r++) {
@@ -266,7 +266,9 @@ function draw() {
   rows.push(`${bottomBorder}  ${sidePanel[BOARD_HEIGHT + 1] || ''}`);
 
   if (gameOver) {
-    rows.push('       GAME OVER       ');
+    rows.push('     GAME OVER     ');
+  } else if (paused) {
+    rows.push('      PAUSED       ');
   }
 
   while (rows.length > MAX_ROWS) {

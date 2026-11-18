@@ -6,4 +6,4 @@
 4. [x] Implement piece movement: left, right, down, and rotation.
 5. [x] Implement collision detection, line clearing, and score tracking.
 6. [x] Add gravity/lock delay and game-over detection.
-7. [ ] Add controls display and final polish/test under `npm start`.
+7. [x] Add controls display and final polish/test under `npm start`.

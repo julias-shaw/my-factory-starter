@@ -95,7 +95,7 @@ function hardDrop(board, piece, random = Math.random, stats = { score: 0 }) {
   return advancePiece(board, piece, random, stats);
 }
 
-function render(board, score = 0, activePiece = null) {
+function render(board, score = 0, activePiece = null, gameOver = false) {
   const display = board.map(row => [...row]);
   if (activePiece) {
     activePiece.shape.forEach((row, dy) => {
@@ -110,11 +110,11 @@ function render(board, score = 0, activePiece = null) {
   }
   const border = `+${'-'.repeat(BOARD_WIDTH * 2)}+`;
   return [
-    `TETRIS  |  Score: ${score}`,
+    `TETRIS  |  Score: ${score}${gameOver ? '  |  GAME OVER - R: restart' : ''}`,
     border,
     ...display.map(row => `|${row.map(cell => cell === null ? '  ' : '[]').join('')}|`),
     border,
-    'Left/Right: move  Up: rotate  Down: soft drop  Space: hard drop',
+    'Left/Right: move  Up: rotate  Down: soft drop  Space: hard drop  R: restart',
   ].join('\n');
 }
 
@@ -127,7 +127,10 @@ function main() {
     return;
   }
 
-  const draw = () => process.stdout.write(`\x1b[H${render(board, stats.score, piece)}`);
+  const draw = () => {
+    const frame = render(board, stats.score, piece, !piece);
+    process.stdout.write(`\x1b[H${frame.replaceAll('\n', '\x1b[K\n')}\x1b[K`);
+  };
   const wasRaw = process.stdin.isRaw;
   let fallTimer;
   const cleanup = () => {
@@ -147,6 +150,13 @@ function main() {
       stop();
       return;
     }
+    if (key.name === 'r') {
+      board.splice(0, board.length, ...createBoard());
+      stats.score = 0;
+      piece = createPiece();
+      draw();
+      return;
+    }
     const dx = key.name === 'left' ? -1 : key.name === 'right' ? 1 : 0;
     if (piece && dx && movePiece(board, piece, dx)) draw();
     if (piece && key.name === 'up' && rotatePiece(board, piece)) draw();
@@ -154,7 +164,6 @@ function main() {
       piece = key.name === 'space'
         ? hardDrop(board, piece, Math.random, stats)
         : advancePiece(board, piece, Math.random, stats);
-      if (!piece) clearInterval(fallTimer);
       draw();
     }
   };
@@ -170,7 +179,6 @@ function main() {
   fallTimer = setInterval(() => {
     if (!piece) return;
     piece = advancePiece(board, piece, Math.random, stats);
-    if (!piece) clearInterval(fallTimer);
     draw();
   }, 700);
 }

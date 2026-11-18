@@ -48,6 +48,20 @@ function movePiece(board, piece, dx) {
   return true;
 }
 
+function rotatePiece(board, piece) {
+  const shape = piece.shape[0].map((_, x) =>
+    piece.shape.map(row => row[x]).reverse());
+  const rotated = { ...piece, shape };
+  // Compact matrices need up to three columns of adjustment for the I piece.
+  for (const dx of [0, -1, 1, -2, 2, -3, 3]) {
+    if (!canPlace(board, rotated, piece.x + dx, piece.y)) continue;
+    piece.shape = shape;
+    piece.x += dx;
+    return true;
+  }
+  return false;
+}
+
 function advancePiece(board, piece, random = Math.random) {
   if (canPlace(board, piece, piece.x, piece.y + 1)) {
     piece.y += 1;
@@ -116,6 +130,7 @@ function main() {
     }
     const dx = key.name === 'left' ? -1 : key.name === 'right' ? 1 : 0;
     if (piece && dx && movePiece(board, piece, dx)) draw();
+    if (piece && key.name === 'up' && rotatePiece(board, piece)) draw();
   };
 
   readline.emitKeypressEvents(process.stdin);
@@ -140,5 +155,5 @@ if (require.main === module) {
 
 module.exports = {
   BOARD_WIDTH, BOARD_HEIGHT, SHAPES, createBoard, createPiece, canPlace, movePiece,
-  advancePiece, render,
+  rotatePiece, advancePiece, render,
 };

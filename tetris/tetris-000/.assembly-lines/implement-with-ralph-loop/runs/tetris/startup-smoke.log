@@ -1,0 +1,28 @@
+
+> terminal-tetris@1.0.0 start
+> node index.js
+
+TETRIS  |  Score: 0
++--------------------+
+|          []        |
+|      [][][]        |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
++--------------------+
+Arrows: move/rotate  Space: drop  P: pause  Q: quit

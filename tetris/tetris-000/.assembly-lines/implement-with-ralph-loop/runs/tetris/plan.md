@@ -6,5 +6,5 @@
 - [x] Add soft-drop and hard-drop controls that move and lock pieces correctly.
 - [x] Add completed-row clearing and scoring, with the current score visible during play.
 - [x] Add game-over detection and a restart control, displaying status and instructions within the 24-row layout.
-- [ ] Add pause and quit controls, and restore terminal input mode, cursor visibility, and terminal state on exit or interruption.
+- [x] Add pause and quit controls, and restore terminal input mode, cursor visibility, and terminal state on exit or interruption.
 - [ ] Add automated checks for core game rules and display height, manually smoke-test `npm start`, and document startup and controls.

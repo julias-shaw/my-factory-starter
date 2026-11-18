@@ -48,6 +48,21 @@ function movePiece(board, piece, dx) {
   return true;
 }
 
+function advancePiece(board, piece, random = Math.random) {
+  if (canPlace(board, piece, piece.x, piece.y + 1)) {
+    piece.y += 1;
+    return piece;
+  }
+
+  piece.shape.forEach((row, dy) => {
+    row.forEach((cell, dx) => {
+      if (cell) board[piece.y + dy][piece.x + dx] = piece.type;
+    });
+  });
+  const next = createPiece(random);
+  return canPlace(board, next) ? next : null;
+}
+
 function render(board, score = 0, activePiece = null) {
   const display = board.map(row => [...row]);
   if (activePiece) {
@@ -73,7 +88,7 @@ function render(board, score = 0, activePiece = null) {
 
 function main() {
   const board = createBoard();
-  const piece = createPiece();
+  let piece = createPiece();
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     process.stdout.write(`${render(board, 0, piece)}\n`);
     return;
@@ -81,7 +96,9 @@ function main() {
 
   const draw = () => process.stdout.write(`\x1b[H${render(board, 0, piece)}`);
   const wasRaw = process.stdin.isRaw;
+  let fallTimer;
   const cleanup = () => {
+    clearInterval(fallTimer);
     process.stdin.removeListener('keypress', onKey);
     process.removeListener('SIGINT', stop);
     process.removeListener('SIGTERM', stop);
@@ -98,7 +115,7 @@ function main() {
       return;
     }
     const dx = key.name === 'left' ? -1 : key.name === 'right' ? 1 : 0;
-    if (dx && movePiece(board, piece, dx)) draw();
+    if (piece && dx && movePiece(board, piece, dx)) draw();
   };
 
   readline.emitKeypressEvents(process.stdin);
@@ -109,6 +126,12 @@ function main() {
   process.once('SIGTERM', stop);
   process.stdout.write('\x1b[2J');
   draw();
+  fallTimer = setInterval(() => {
+    if (!piece) return;
+    piece = advancePiece(board, piece);
+    if (!piece) clearInterval(fallTimer);
+    draw();
+  }, 700);
 }
 
 if (require.main === module) {
@@ -116,5 +139,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  BOARD_WIDTH, BOARD_HEIGHT, SHAPES, createBoard, createPiece, canPlace, movePiece, render,
+  BOARD_WIDTH, BOARD_HEIGHT, SHAPES, createBoard, createPiece, canPlace, movePiece,
+  advancePiece, render,
 };

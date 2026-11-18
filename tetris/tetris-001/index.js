@@ -59,6 +59,60 @@ function spawnPiece() {
   currentPiece = randomPiece();
 }
 
+// Boundary check for the current piece. Full collision detection with the
+// board comes in the next task.
+function fits(piece) {
+  for (let r = 0; r < piece.shape.length; r++) {
+    for (let c = 0; c < piece.shape[r].length; c++) {
+      if (!piece.shape[r][c]) continue;
+      const x = piece.x + c;
+      const y = piece.y + r;
+      if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) return false;
+    }
+  }
+  return true;
+}
+
+function movePiece(dx, dy) {
+  const candidate = { ...currentPiece, x: currentPiece.x + dx, y: currentPiece.y + dy };
+  if (!fits(candidate)) return false;
+  currentPiece = candidate;
+  return true;
+}
+
+function moveLeft() {
+  return movePiece(-1, 0);
+}
+
+function moveRight() {
+  return movePiece(1, 0);
+}
+
+function moveDown() {
+  return movePiece(0, 1);
+}
+
+function rotate(dir) {
+  const shape = currentPiece.shape;
+  const cols = shape[0].length;
+
+  const rotated = dir === 'cw'
+    ? Array.from({ length: cols }, (_, c) => shape.map((row) => row[c]).reverse())
+    : Array.from({ length: cols }, (_, c) =>
+        shape.map((row) => row[cols - 1 - c])
+      );
+
+  // Try the rotated shape in place, then nudge horizontally if it clips.
+  for (const offset of [0, -1, 1, -2, 2]) {
+    const candidate = { ...currentPiece, shape: rotated, x: currentPiece.x + offset };
+    if (fits(candidate)) {
+      currentPiece = candidate;
+      return true;
+    }
+  }
+  return false;
+}
+
 function getDisplayCell(r, c) {
   // Current piece overlay
   if (currentPiece) {
@@ -133,6 +187,34 @@ if (process.stdin.isTTY) {
     if (key === '\u0003' || key === 'q' || key === 'Q') {
       cleanup();
     }
+
+    let changed = false;
+    switch (key) {
+      case '\u001b[D': // left arrow
+      case 'l':
+      case 'L':
+        changed = moveLeft();
+        break;
+      case '\u001b[C': // right arrow
+      case 'r':
+      case 'R':
+        changed = moveRight();
+        break;
+      case '\u001b[B': // down arrow
+      case 'd':
+      case 'D':
+        changed = moveDown();
+        break;
+      case '\u001b[A': // up arrow
+      case 'u':
+      case 'U':
+        changed = rotate('cw');
+        break;
+      default:
+        break;
+    }
+
+    if (changed) draw();
   });
 
   process.on('SIGINT', cleanup);

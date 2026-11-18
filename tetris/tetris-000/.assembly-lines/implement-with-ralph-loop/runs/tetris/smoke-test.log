@@ -1,0 +1,5 @@
+PASS: npm start in an 80x24 pseudo-terminal.
+Verified initial display, timed gravity, pause (no gravity redraw), resume,
+arrow controls, hard drop, restart with zero score, and Q exit (status 0).
+Verified cursor/alternate-screen cleanup and restored terminal attributes.
+npm test: 12 tests passed.

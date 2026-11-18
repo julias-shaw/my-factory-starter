@@ -77,6 +77,13 @@ function advancePiece(board, piece, random = Math.random) {
   return canPlace(board, next) ? next : null;
 }
 
+function hardDrop(board, piece, random = Math.random) {
+  while (canPlace(board, piece, piece.x, piece.y + 1)) {
+    piece.y += 1;
+  }
+  return advancePiece(board, piece, random);
+}
+
 function render(board, score = 0, activePiece = null) {
   const display = board.map(row => [...row]);
   if (activePiece) {
@@ -96,7 +103,7 @@ function render(board, score = 0, activePiece = null) {
     border,
     ...display.map(row => `|${row.map(cell => cell === null ? '  ' : '[]').join('')}|`),
     border,
-    'Arrows: move/rotate  Space: drop  P: pause  Q: quit',
+    'Left/Right: move  Up: rotate  Down: soft drop  Space: hard drop',
   ].join('\n');
 }
 
@@ -131,6 +138,11 @@ function main() {
     const dx = key.name === 'left' ? -1 : key.name === 'right' ? 1 : 0;
     if (piece && dx && movePiece(board, piece, dx)) draw();
     if (piece && key.name === 'up' && rotatePiece(board, piece)) draw();
+    if (piece && (key.name === 'down' || key.name === 'space')) {
+      piece = key.name === 'space' ? hardDrop(board, piece) : advancePiece(board, piece);
+      if (!piece) clearInterval(fallTimer);
+      draw();
+    }
   };
 
   readline.emitKeypressEvents(process.stdin);
@@ -155,5 +167,5 @@ if (require.main === module) {
 
 module.exports = {
   BOARD_WIDTH, BOARD_HEIGHT, SHAPES, createBoard, createPiece, canPlace, movePiece,
-  rotatePiece, advancePiece, render,
+  rotatePiece, advancePiece, hardDrop, render,
 };

@@ -2,7 +2,7 @@
 - [x] Add the seven tetromino shapes, randomized piece generation, and rendering of an active piece on the board.
 - [x] Add raw keyboard input for left and right movement with collision checks against the board edges and occupied cells.
 - [x] Add timed falling, piece locking, and spawning of the next piece, keeping the game running between keyboard events.
-- [ ] Add piece rotation with collision checks and reasonable wall adjustments.
+- [x] Add piece rotation with collision checks and reasonable wall adjustments.
 - [ ] Add soft-drop and hard-drop controls that move and lock pieces correctly.
 - [ ] Add completed-row clearing and scoring, with the current score visible during play.
 - [ ] Add game-over detection and a restart control, displaying status and instructions within the 24-row layout.

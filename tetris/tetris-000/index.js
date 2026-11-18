@@ -95,7 +95,7 @@ function hardDrop(board, piece, random = Math.random, stats = { score: 0 }) {
   return advancePiece(board, piece, random, stats);
 }
 
-function render(board, score = 0, activePiece = null, gameOver = false) {
+function render(board, score = 0, activePiece = null, gameOver = false, paused = false) {
   const display = board.map(row => [...row]);
   if (activePiece) {
     activePiece.shape.forEach((row, dy) => {
@@ -110,11 +110,11 @@ function render(board, score = 0, activePiece = null, gameOver = false) {
   }
   const border = `+${'-'.repeat(BOARD_WIDTH * 2)}+`;
   return [
-    `TETRIS  |  Score: ${score}${gameOver ? '  |  GAME OVER - R: restart' : ''}`,
+    `TETRIS  |  Score: ${score}${gameOver ? '  |  GAME OVER - R: restart' : paused ? '  |  PAUSED - P: resume' : ''}`,
     border,
     ...display.map(row => `|${row.map(cell => cell === null ? '  ' : '[]').join('')}|`),
     border,
-    'Left/Right: move  Up: rotate  Down: soft drop  Space: hard drop  R: restart',
+    'Arrows: move/rotate/drop  Space: hard drop  P: pause  R: restart  Q: quit',
   ].join('\n');
 }
 
@@ -127,26 +127,33 @@ function main() {
     return;
   }
 
+  let paused = false;
+  let stopped = false;
   const draw = () => {
-    const frame = render(board, stats.score, piece, !piece);
+    const frame = render(board, stats.score, piece, !piece, paused);
     process.stdout.write(`\x1b[H${frame.replaceAll('\n', '\x1b[K\n')}\x1b[K`);
   };
   const wasRaw = process.stdin.isRaw;
   let fallTimer;
   const cleanup = () => {
+    if (stopped) return;
+    stopped = true;
     clearInterval(fallTimer);
     process.stdin.removeListener('keypress', onKey);
     process.removeListener('SIGINT', stop);
     process.removeListener('SIGTERM', stop);
+    process.removeListener('SIGHUP', stop);
+    process.removeListener('exit', cleanup);
     process.stdin.setRawMode(Boolean(wasRaw));
     process.stdin.pause();
-    process.stdout.write('\x1b[24;1H\n');
+    process.stdout.write('\x1b[0m\x1b[?25h\x1b[?1049l');
   };
   const stop = () => {
     cleanup();
   };
   const onKey = (text, key = {}) => {
-    if (key.ctrl && key.name === 'c') {
+    if (stopped) return;
+    if (key.name === 'q' || (key.ctrl && key.name === 'c')) {
       stop();
       return;
     }
@@ -154,9 +161,16 @@ function main() {
       board.splice(0, board.length, ...createBoard());
       stats.score = 0;
       piece = createPiece();
+      paused = false;
       draw();
       return;
     }
+    if (key.name === 'p' && piece) {
+      paused = !paused;
+      draw();
+      return;
+    }
+    if (paused) return;
     const dx = key.name === 'left' ? -1 : key.name === 'right' ? 1 : 0;
     if (piece && dx && movePiece(board, piece, dx)) draw();
     if (piece && key.name === 'up' && rotatePiece(board, piece)) draw();
@@ -168,16 +182,18 @@ function main() {
     }
   };
 
+  process.once('exit', cleanup);
   readline.emitKeypressEvents(process.stdin);
   process.stdin.setRawMode(true);
   process.stdin.on('keypress', onKey);
   process.stdin.resume();
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
-  process.stdout.write('\x1b[2J');
+  process.once('SIGHUP', stop);
+  process.stdout.write('\x1b[?1049h\x1b[?25l\x1b[2J');
   draw();
   fallTimer = setInterval(() => {
-    if (!piece) return;
+    if (paused || stopped || !piece) return;
     piece = advancePiece(board, piece, Math.random, stats);
     draw();
   }, 700);

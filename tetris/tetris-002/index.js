@@ -252,17 +252,32 @@ function renderPanel(stats = createStats()) {
   process.stdout.write(moveTo(15, panelLeft) + '↑ rotate');
   process.stdout.write(moveTo(16, panelLeft) + '↓ soft drop');
   process.stdout.write(moveTo(17, panelLeft) + 'space hard drop');
+  process.stdout.write(moveTo(18, panelLeft) + 'P pause');
+  process.stdout.write(moveTo(19, panelLeft) + 'Q quit');
 }
 
 function renderFooter(gameOver = false) {
   const footerRow = BOARD_HEIGHT + 3;
   const text = gameOver
-    ? 'GAME OVER - press Ctrl+C to quit'
+    ? 'GAME OVER - R restart | Q quit'
     : 'Move ←/→  Rotate ↑  Soft drop ↓  Hard drop space';
   process.stdout.write(moveTo(footerRow, 1) + ANSI.yellow + text + ANSI.reset);
 }
 
-function render(board, activePiece, stats) {
+function renderStatus({ paused = false, gameOver = false } = {}) {
+  const footerRow = BOARD_HEIGHT + 3;
+  let text;
+  if (gameOver) {
+    text = 'GAME OVER - R restart | Q quit';
+  } else if (paused) {
+    text = 'PAUSED - P resume | Q quit';
+  } else {
+    text = 'Move ←/→  Rotate ↑  Soft drop ↓  Hard drop space';
+  }
+  process.stdout.write(moveTo(footerRow, 1) + ANSI.yellow + text + ANSI.reset);
+}
+
+function render(board, activePiece, stats, { paused = false } = {}) {
   clearScreen();
   const boardRows = renderBoard(board, activePiece);
   const boxWidth = BOARD_WIDTH + 2;
@@ -272,7 +287,7 @@ function render(board, activePiece, stats) {
     process.stdout.write(moveTo(BOARD_TOP + 1 + y, BOARD_LEFT + 1) + boardRows[y]);
   }
   renderPanel(stats);
-  renderFooter(!activePiece);
+  renderStatus({ paused, gameOver: !activePiece });
 }
 
 function cleanup() {
@@ -312,15 +327,27 @@ module.exports = {
 };
 
 if (require.main === module) {
-  const board = createBoard();
+  let board = createBoard();
   let activePiece = createPiece();
   let stats = createStats();
   let gameOver = false;
+  let paused = false;
   let gravityInterval;
 
   function stopGame() {
     clearInterval(gravityInterval);
     cleanup();
+  }
+
+  function restartGame() {
+    board = createBoard();
+    stats = createStats();
+    activePiece = createPiece();
+    gameOver = false;
+    paused = false;
+    clearInterval(gravityInterval);
+    gravityInterval = setInterval(tick, GRAVITY_MS);
+    render(board, activePiece, stats, { paused });
   }
 
   function handleLockAndSpawn() {
@@ -336,18 +363,18 @@ if (require.main === module) {
   }
 
   function tick() {
-    if (gameOver) return;
+    if (gameOver || paused) return;
     const moved = softDrop(board, activePiece);
     if (moved) {
       activePiece = moved;
     } else {
       handleLockAndSpawn();
     }
-    render(board, activePiece, stats);
+    render(board, activePiece, stats, { paused });
   }
 
   process.stdout.write(ANSI.hideCursor);
-  render(board, activePiece, stats);
+  render(board, activePiece, stats, { paused });
 
   const readline = require('readline');
   readline.emitKeypressEvents(process.stdin);
@@ -360,11 +387,37 @@ if (require.main === module) {
   gravityInterval = setInterval(tick, GRAVITY_MS);
 
   process.stdin.on('keypress', (str, key) => {
-    if (!key || gameOver) return;
+    if (!key) return;
     if (key.ctrl && key.name === 'c') {
       stopGame();
       return;
     }
+    if (key.name === 'q' || key.name === 'Q') {
+      stopGame();
+      return;
+    }
+
+    if (paused) {
+      if (key.name === 'p' || key.name === 'P') {
+        paused = false;
+        render(board, activePiece, stats, { paused });
+      }
+      return;
+    }
+
+    if (gameOver) {
+      if (key.name === 'r' || key.name === 'R') {
+        restartGame();
+      }
+      return;
+    }
+
+    if (key.name === 'p' || key.name === 'P') {
+      paused = true;
+      render(board, activePiece, stats, { paused });
+      return;
+    }
+
     if (key.name === 'left') {
       activePiece = movePiece(board, activePiece, -1, 0) || activePiece;
     } else if (key.name === 'right') {
@@ -382,7 +435,7 @@ if (require.main === module) {
       activePiece = hardDrop(board, activePiece);
       handleLockAndSpawn();
     }
-    render(board, activePiece, stats);
+    render(board, activePiece, stats, { paused });
   });
 
   process.on('SIGINT', stopGame);

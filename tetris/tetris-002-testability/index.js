@@ -197,7 +197,19 @@ function renderBoard(board) {
   return rows;
 }
 
-function render(state) {
+function controlLines() {
+  return [
+    ' Controls',
+    ' left  - move',
+    ' down  - move',
+    ' right - move',
+    ' space - rotate',
+    ' q     - quit',
+    '',
+  ];
+}
+
+function generateFrame(state) {
   const score = String(state.score).padStart(5, ' ');
   const lines = String(state.lines).padStart(5, ' ');
   const level = String(state.level).padStart(2, ' ');
@@ -221,13 +233,7 @@ function render(state) {
     ' Level',
     ` ${level}`,
     '',
-    ' Controls',
-    ' Left  ',
-    ' Down  ',
-    ' Right ',
-    ' Space ',
-    ' Q     ',
-    '',
+    ...controlLines(),
   ];
 
   const displayBoard = overlayPiece(state.board, state.piece);
@@ -246,8 +252,12 @@ function render(state) {
     rows.push('');
   }
 
+  return rows.slice(0, 24).join('\n');
+}
+
+function render(state) {
   process.stdout.write('\x1b[2J\x1b[H');
-  process.stdout.write(rows.slice(0, 24).join('\n') + '\n');
+  process.stdout.write(generateFrame(state) + '\n');
 }
 
 function spawnPiece(state) {
@@ -357,6 +367,7 @@ module.exports = {
   createBoard,
   createPiece,
   renderBoard,
+  generateFrame,
   render,
   rotateClockwise,
   isValidPosition,

@@ -1,0 +1,12 @@
+{
+  "name": "tetris-002-testability",
+  "version": "1.0.0",
+  "description": "Terminal Tetris game",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["tetris", "terminal"],
+  "author": "",
+  "license": "MIT"
+}

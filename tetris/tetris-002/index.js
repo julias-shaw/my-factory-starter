@@ -54,6 +54,8 @@ const WALL_KICK_OFFSETS = [
   [0, 1]
 ];
 
+const GRAVITY_MS = 1000;
+
 function moveTo(row, col) {
   return `\x1b[${row};${col}H`;
 }
@@ -141,6 +143,30 @@ function rotatePiece(board, piece) {
   return null;
 }
 
+function lockPiece(board, piece) {
+  for (let y = 0; y < piece.matrix.length; y++) {
+    for (let x = 0; x < piece.matrix[y].length; x++) {
+      if (piece.matrix[y][x]) {
+        const boardY = piece.y + y;
+        const boardX = piece.x + x;
+        if (boardY >= 0) {
+          board[boardY][boardX] = piece.color;
+        }
+      }
+    }
+  }
+}
+
+function hardDrop(board, piece) {
+  let current = piece;
+  while (true) {
+    const next = movePiece(board, current, 0, 1);
+    if (!next) break;
+    current = next;
+  }
+  return current;
+}
+
 function renderBoard(board, activePiece) {
   const rows = [];
   for (let y = 0; y < BOARD_HEIGHT; y++) {
@@ -185,16 +211,16 @@ function renderPanel() {
   process.stdout.write(moveTo(13, panelLeft) + ANSI.bold + 'Controls' + ANSI.reset);
   process.stdout.write(moveTo(14, panelLeft) + '← / → move');
   process.stdout.write(moveTo(15, panelLeft) + '↑ rotate');
+  process.stdout.write(moveTo(16, panelLeft) + '↓ soft drop');
+  process.stdout.write(moveTo(17, panelLeft) + 'space hard drop');
 }
 
-function renderFooter() {
+function renderFooter(gameOver = false) {
   const footerRow = BOARD_HEIGHT + 3;
-  process.stdout.write(
-    moveTo(footerRow, 1) +
-    ANSI.yellow +
-    'Move with ← / →, rotate with ↑.' +
-    ANSI.reset
-  );
+  const text = gameOver
+    ? 'GAME OVER - press Ctrl+C to quit'
+    : 'Move ←/→  Rotate ↑  Soft drop ↓  Hard drop space';
+  process.stdout.write(moveTo(footerRow, 1) + ANSI.yellow + text + ANSI.reset);
 }
 
 function render(board, activePiece) {
@@ -207,7 +233,7 @@ function render(board, activePiece) {
     process.stdout.write(moveTo(BOARD_TOP + 1 + y, BOARD_LEFT + 1) + boardRows[y]);
   }
   renderPanel();
-  renderFooter();
+  renderFooter(!activePiece);
 }
 
 function cleanup() {
@@ -226,12 +252,15 @@ module.exports = {
   TETROMINO_COLORS,
   PIECE_NAMES,
   WALL_KICK_OFFSETS,
+  GRAVITY_MS,
   createBoard,
   createPiece,
   rotateMatrix,
   isValidPosition,
   movePiece,
   rotatePiece,
+  lockPiece,
+  hardDrop,
   renderBoard,
   renderPanel,
   renderFooter,
@@ -241,6 +270,36 @@ module.exports = {
 if (require.main === module) {
   const board = createBoard();
   let activePiece = createPiece();
+  let gameOver = false;
+  let gravityInterval;
+
+  function stopGame() {
+    clearInterval(gravityInterval);
+    cleanup();
+  }
+
+  function lockAndSpawn() {
+    lockPiece(board, activePiece);
+    const next = createPiece();
+    if (!isValidPosition(board, next)) {
+      gameOver = true;
+      clearInterval(gravityInterval);
+      activePiece = null;
+    } else {
+      activePiece = next;
+    }
+  }
+
+  function tick() {
+    if (gameOver) return;
+    const moved = movePiece(board, activePiece, 0, 1);
+    if (moved) {
+      activePiece = moved;
+    } else {
+      lockAndSpawn();
+    }
+    render(board, activePiece);
+  }
 
   process.stdout.write(ANSI.hideCursor);
   render(board, activePiece);
@@ -253,10 +312,12 @@ if (require.main === module) {
   process.stdin.setEncoding('utf8');
   process.stdin.resume();
 
+  gravityInterval = setInterval(tick, GRAVITY_MS);
+
   process.stdin.on('keypress', (str, key) => {
-    if (!key) return;
+    if (!key || gameOver) return;
     if (key.ctrl && key.name === 'c') {
-      cleanup();
+      stopGame();
       return;
     }
     if (key.name === 'left') {
@@ -265,10 +326,20 @@ if (require.main === module) {
       activePiece = movePiece(board, activePiece, 1, 0) || activePiece;
     } else if (key.name === 'up') {
       activePiece = rotatePiece(board, activePiece) || activePiece;
+    } else if (key.name === 'down') {
+      const moved = movePiece(board, activePiece, 0, 1);
+      if (moved) {
+        activePiece = moved;
+      } else {
+        lockAndSpawn();
+      }
+    } else if (key.name === 'space') {
+      activePiece = hardDrop(board, activePiece);
+      lockAndSpawn();
     }
     render(board, activePiece);
   });
 
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
+  process.on('SIGINT', stopGame);
+  process.on('SIGTERM', stopGame);
 }

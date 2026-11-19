@@ -78,6 +78,10 @@ function createBoard() {
   return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
 }
 
+function createStats() {
+  return { score: 0, lines: 0, level: 1 };
+}
+
 function createPiece(rng = Math.random) {
   const name = PIECE_NAMES[Math.floor(rng() * PIECE_NAMES.length)];
   const matrix = TETROMINO_SHAPES[name].map(row => row.slice());
@@ -157,6 +161,37 @@ function lockPiece(board, piece) {
   }
 }
 
+function clearLines(board) {
+  let cleared = 0;
+  for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
+    if (board[y].every(cell => cell !== null)) {
+      board.splice(y, 1);
+      board.unshift(Array(BOARD_WIDTH).fill(null));
+      cleared++;
+      y++;
+    }
+  }
+  return cleared;
+}
+
+function updateScore(stats, cleared) {
+  const points = [0, 100, 300, 500, 800];
+  stats.score += points[cleared] || 0;
+  stats.lines += cleared;
+  stats.level = Math.floor(stats.lines / 10) + 1;
+}
+
+function lockAndSpawn(board, piece, rng = Math.random, stats = createStats()) {
+  lockPiece(board, piece);
+  const cleared = clearLines(board);
+  updateScore(stats, cleared);
+  const next = createPiece(rng);
+  if (!isValidPosition(board, next)) {
+    return { next: null, stats, gameOver: true };
+  }
+  return { next, stats, gameOver: false };
+}
+
 function hardDrop(board, piece) {
   let current = piece;
   while (true) {
@@ -201,16 +236,16 @@ function renderBoard(board, activePiece) {
   return rows;
 }
 
-function renderPanel() {
+function renderPanel(stats = createStats()) {
   const panelLeft = BOARD_WIDTH + 5;
 
   process.stdout.write(moveTo(1, panelLeft) + ANSI.bold + ANSI.cyan + 'TETRIS' + ANSI.reset);
   process.stdout.write(moveTo(3, panelLeft) + ANSI.bold + 'Score' + ANSI.reset);
-  process.stdout.write(moveTo(4, panelLeft) + '0');
+  process.stdout.write(moveTo(4, panelLeft) + stats.score.toString());
   process.stdout.write(moveTo(6, panelLeft) + ANSI.bold + 'Level' + ANSI.reset);
-  process.stdout.write(moveTo(7, panelLeft) + '1');
+  process.stdout.write(moveTo(7, panelLeft) + stats.level.toString());
   process.stdout.write(moveTo(9, panelLeft) + ANSI.bold + 'Lines' + ANSI.reset);
-  process.stdout.write(moveTo(10, panelLeft) + '0');
+  process.stdout.write(moveTo(10, panelLeft) + stats.lines.toString());
 
   process.stdout.write(moveTo(13, panelLeft) + ANSI.bold + 'Controls' + ANSI.reset);
   process.stdout.write(moveTo(14, panelLeft) + '← / → move');
@@ -227,7 +262,7 @@ function renderFooter(gameOver = false) {
   process.stdout.write(moveTo(footerRow, 1) + ANSI.yellow + text + ANSI.reset);
 }
 
-function render(board, activePiece) {
+function render(board, activePiece, stats) {
   clearScreen();
   const boardRows = renderBoard(board, activePiece);
   const boxWidth = BOARD_WIDTH + 2;
@@ -236,7 +271,7 @@ function render(board, activePiece) {
   for (let y = 0; y < BOARD_HEIGHT; y++) {
     process.stdout.write(moveTo(BOARD_TOP + 1 + y, BOARD_LEFT + 1) + boardRows[y]);
   }
-  renderPanel();
+  renderPanel(stats);
   renderFooter(!activePiece);
 }
 
@@ -258,12 +293,16 @@ module.exports = {
   WALL_KICK_OFFSETS,
   GRAVITY_MS,
   createBoard,
+  createStats,
   createPiece,
   rotateMatrix,
   isValidPosition,
   movePiece,
   rotatePiece,
   lockPiece,
+  clearLines,
+  updateScore,
+  lockAndSpawn,
   hardDrop,
   softDrop,
   renderBoard,
@@ -275,6 +314,7 @@ module.exports = {
 if (require.main === module) {
   const board = createBoard();
   let activePiece = createPiece();
+  let stats = createStats();
   let gameOver = false;
   let gravityInterval;
 
@@ -283,15 +323,15 @@ if (require.main === module) {
     cleanup();
   }
 
-  function lockAndSpawn() {
-    lockPiece(board, activePiece);
-    const next = createPiece();
-    if (!isValidPosition(board, next)) {
+  function handleLockAndSpawn() {
+    const result = lockAndSpawn(board, activePiece, Math.random, stats);
+    stats = result.stats;
+    if (result.gameOver) {
       gameOver = true;
       clearInterval(gravityInterval);
       activePiece = null;
     } else {
-      activePiece = next;
+      activePiece = result.next;
     }
   }
 
@@ -301,13 +341,13 @@ if (require.main === module) {
     if (moved) {
       activePiece = moved;
     } else {
-      lockAndSpawn();
+      handleLockAndSpawn();
     }
-    render(board, activePiece);
+    render(board, activePiece, stats);
   }
 
   process.stdout.write(ANSI.hideCursor);
-  render(board, activePiece);
+  render(board, activePiece, stats);
 
   const readline = require('readline');
   readline.emitKeypressEvents(process.stdin);
@@ -336,13 +376,13 @@ if (require.main === module) {
       if (moved) {
         activePiece = moved;
       } else {
-        lockAndSpawn();
+        handleLockAndSpawn();
       }
     } else if (key.name === 'space') {
       activePiece = hardDrop(board, activePiece);
-      lockAndSpawn();
+      handleLockAndSpawn();
     }
-    render(board, activePiece);
+    render(board, activePiece, stats);
   });
 
   process.on('SIGINT', stopGame);

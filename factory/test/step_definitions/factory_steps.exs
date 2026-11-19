@@ -14,7 +14,7 @@ defmodule FactorySteps do
     File.mkdir_p!(copy)
     ExUnit.Callbacks.on_exit(fn -> File.rm_rf!(workspace) end)
 
-    for path <- ["run", "cli.exs", "lib"] do
+    for path <- ["run", "cli.exs", "lib", "VALIDATOR.md"] do
       File.cp_r!(Path.join(source, path), Path.join(copy, path))
     end
 
@@ -41,7 +41,7 @@ defmodule FactorySteps do
     Map.put(context, :seed, seed)
   end
 
-  step "the agent plans the tasks alpha and beta, and does one task a pass", context do
+  step "the planner plans the tasks alpha and beta", context do
     agent_dir = Path.join(context.workspace, "agents")
     File.mkdir_p!(agent_dir)
     agent = Path.join(agent_dir, "pi")
@@ -128,8 +128,8 @@ defmodule FactorySteps do
     put_plan(context, "- [x] alpha\n- [x] beta\n")
   end
 
-  step "the agent writes a file called SENTINEL", context do
-    set_agent_mode(context, "sentinel")
+  step "the doer writes a file called SENTINEL", context do
+    set_mode(context, "doer", "sentinel")
   end
 
   step "there is one new work commit", context do
@@ -144,8 +144,8 @@ defmodule FactorySteps do
     context
   end
 
-  step "the agent was pointed at the plan and at the seed", context do
-    [call | _] = calls(context)
+  step "the doer was pointed at the plan and at the seed", context do
+    [call | _] = calls(context, "doer")
     args = File.read!(call)
     assert args =~ context.seed
     assert args =~ plan(context)
@@ -153,16 +153,16 @@ defmodule FactorySteps do
     context
   end
 
-  step "the agent was asked for a result with the field {string}", %{args: [field]} = context do
-    [call | _] = calls(context)
+  step "the planner was asked for a result with the field {string}", %{args: [field]} = context do
+    [call | _] = calls(context, "planner")
     args = File.read!(call)
     assert args =~ "JSON"
     assert args =~ field
     context
   end
 
-  step "the agent says {string} before its result", %{args: [prose]} = context do
-    File.write!(Path.join(context.chosen_dir, "preamble"), prose)
+  step "the validator says {string} before its result", %{args: [prose]} = context do
+    File.write!(Path.join(context.chosen_dir, "validator-preamble"), prose)
     context
   end
 
@@ -221,13 +221,13 @@ defmodule FactorySteps do
     context
   end
 
-  step "the agent answers in prose, with no result", context do
-    set_agent_mode(context, "prose-result")
+  step "the validator answers in prose, with no result", context do
+    set_mode(context, "validator", "prose-result")
   end
 
-  step "it reports that it could not read the agent's result", context do
+  step "it reports that it could not read the validator's result", context do
     assert context.status != 0
-    assert context.output =~ "could not read the agent's result"
+    assert context.output =~ "could not read the validator's result"
     Map.put(context, :expected_status, 1)
   end
 
@@ -299,8 +299,8 @@ defmodule FactorySteps do
     context
   end
 
-  step "the agent keeps its plan in prose", context do
-    set_agent_mode(context, "prose-plan")
+  step "the planner keeps its plan in prose", context do
+    set_mode(context, "planner", "prose-plan")
   end
 
   step "the work for alpha and beta has been committed", context do
@@ -422,6 +422,115 @@ defmodule FactorySteps do
     context
   end
 
+  step "the doer does the next task in the plan", context do
+    set_mode(context, "doer", "normal")
+  end
+
+  step "the validator is always satisfied", context do
+    set_mode(context, "validator", "satisfied")
+  end
+
+  step "the doer's chosen harness has been called", context do
+    assert calls(context, "doer") != []
+    context
+  end
+
+  step "the doer cannot be run", context do
+    Map.put(context, :doer_harness, Path.join(context.workspace, "missing-doer"))
+  end
+
+  step "it reports that it could not run the doer", context do
+    assert context.status != 0
+    assert context.output =~ "could not run the doer"
+    context
+  end
+
+  step "the factory allows at most three attempts per pass", context do
+    Map.put(context, :attempts, 3)
+  end
+
+  step "the validator is never satisfied", context do
+    set_mode(context, "validator", "never")
+  end
+
+  step "the validator is not satisfied the first time", context do
+    set_mode(context, "validator", "retry")
+  end
+
+  step "the doer has been called once", context do
+    assert length(calls(context, "doer")) == 1
+    context
+  end
+
+  step "the doer has been called twice", context do
+    assert length(calls(context, "doer")) == 2
+    context
+  end
+
+  step "the doer has been called three times", context do
+    assert length(calls(context, "doer")) == 3
+    context
+  end
+
+  step "the doer has not been called", context do
+    assert calls(context, "doer") == []
+    context
+  end
+
+  step "it reports that the pass hit its limit", context do
+    assert context.status != 0
+    assert context.output =~ "pass hit its limit"
+    Map.put(context, :expected_status, 1)
+  end
+
+  step "the validator was asked for a result with the fields {string} and {string}",
+       %{args: [a, b]} = context do
+    [call | _] = calls(context, "validator")
+    prompt = File.read!(call)
+    assert prompt =~ "JSON"
+    assert prompt =~ a
+    assert prompt =~ b
+    context
+  end
+
+  step "the doer keeps its plan in prose", context do
+    set_mode(context, "doer", "prose-plan")
+  end
+
+  step "the validator's lens is testability", context do
+    Map.put(context, :lens, "testability")
+  end
+
+  step "the validator was given {string}", %{args: [lens]} = context do
+    [call | _] = calls(context, "validator")
+    assert File.read!(call) =~ lens
+    context
+  end
+
+  step "the doer was given the validator's findings", context do
+    prompts = Enum.map(calls(context, "doer"), &File.read!/1)
+    assert Enum.any?(prompts, &String.contains?(&1, "Separate game logic from terminal input"))
+    context
+  end
+
+  step "the validator was given the work for the second task", context do
+    [call | _] = calls(context, "validator")
+    assert File.read!(call) =~ "beta.txt"
+    assert File.read!(call) =~ "Work for beta"
+    context
+  end
+
+  step "it was not given the work for the first task", context do
+    [call | _] = calls(context, "validator")
+    refute File.read!(call) =~ "alpha.txt"
+    refute File.read!(call) =~ "Work for alpha"
+    context
+  end
+
+  defp calls(context, role) do
+    Path.wildcard(Path.join(context.chosen_dir, "call-#{role}-*.args"))
+  end
+
   defp run_factory(context, all) do
     head = git!(context.workspace, ["rev-parse", "HEAD"])
 
@@ -443,6 +552,12 @@ defmodule FactorySteps do
 
     args = if all, do: args ++ ["--all"], else: args
     args = if context[:harness], do: args ++ ["--harness", context.harness], else: args
+
+    args =
+      if context[:doer_harness], do: args ++ ["--doer-harness", context.doer_harness], else: args
+
+    args = args ++ ["--attempts", to_string(context[:attempts] || 3)]
+    args = if context[:lens], do: args ++ ["--lens", context.lens], else: args
 
     env =
       context.agent_env ++
@@ -480,8 +595,8 @@ defmodule FactorySteps do
     |> Enum.map(fn [_, mark, task] -> {task, mark == "x"} end)
   end
 
-  defp set_agent_mode(context, mode) do
-    File.write!(Path.join(context.chosen_dir, "mode"), mode)
+  defp set_mode(context, role, mode) do
+    File.write!(Path.join(context.chosen_dir, role <> "-mode"), mode)
     context
   end
 

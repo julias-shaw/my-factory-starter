@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tetris generations · Homework 002 comparison</title>
+<style>
+:root{color-scheme:light;--ink:#192f39;--muted:#54666d;--paper:#f4f3ec;--line:#cdd8d4;--accent:#006d68;--soft:#e1efea}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1180px;margin:auto;padding:48px 28px 64px}a{color:var(--accent);text-underline-offset:3px}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(38px,6vw,70px);line-height:1.08;letter-spacing:-.045em;max-width:850px;margin-bottom:24px}h2{font-size:30px;letter-spacing:-.025em;margin-bottom:14px}h3{font-size:20px;line-height:1.3;margin:12px 0}section{margin-top:56px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;color:var(--accent);font-size:12px;font-weight:750;margin-bottom:18px}.lede{font-size:20px;max-width:850px;color:var(--muted)}nav{display:flex;gap:22px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:20px 0}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:30px}.stat{background:white;border:1px solid var(--line);border-radius:12px;padding:20px}.stat strong{font-size:32px;display:block;line-height:1.2}.stat span{color:var(--muted);font-size:14px}.callout{padding:24px;background:var(--soft);border-left:4px solid var(--accent);border-radius:0 12px 12px 0}.callout p:last-child{margin-bottom:0}.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:white}table{border-collapse:collapse;width:100%;min-width:700px;font-size:14px}caption{text-align:left;padding:16px 20px;color:var(--muted)}th,td{text-align:left;vertical-align:top;padding:16px 20px;border-top:1px solid var(--line)}thead th{background:#e7eeea;font-size:13px}tbody th{width:22%}td{width:39%}.evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.evidence{padding:24px;background:white;border:1px solid var(--line);border-radius:12px}.tag{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:750}.source{font-size:13px;color:var(--muted);margin-bottom:0}.screens{display:grid;grid-template-columns:1fr 1fr;gap:18px}.terminal{background:#102a32;color:#e2f1e8;border-radius:12px;overflow:hidden;min-width:0}.terminal header{display:flex;justify-content:space-between;gap:10px;padding:14px 18px;background:#1c3b43;font-size:14px}.terminal small{color:#a7c5c5}.terminal pre{padding:18px;margin:0;overflow:auto;font:13px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre;min-height:455px}.terminal footer{padding:12px 18px;color:#a7c5c5;font-size:12px;border-top:1px solid #35535a}pre.command{padding:20px;background:#192f39;color:#e2f1e8;border-radius:12px;overflow:auto;font-size:13px}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}details{background:white;border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:14px 0}summary{cursor:pointer;font-weight:650}.plan{white-space:pre-wrap;font-size:12px;line-height:1.6;overflow-wrap:anywhere;margin-bottom:0}.muted{color:var(--muted);font-size:14px}li{margin:8px 0}.closing{margin-top:48px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
+@media(max-width:760px){main{padding:30px 18px}.stats{grid-template-columns:1fr 1fr}.screens,.evidence-grid{grid-template-columns:1fr}.terminal pre{min-height:0}h1{font-size:42px}section{margin-top:38px}}
+@media print{body{background:white}main{max-width:none;padding:12px}nav{display:none}.terminal{break-inside:avoid}.terminal pre{min-height:0;font-size:10px}.evidence{break-inside:avoid}details{display:block}details>.plan{display:block}.stats{margin-top:14px}section{margin-top:28px}a{color:inherit}}
+</style></head><body><main>
+<div class="eyebrow">Lean software manufacturing · Homework 002</div>
+<h1>Tetris, across three generations.</h1>
+<p class="lede">One seed, a factory that now checks its work, and two choices of validator lens. This report compares the preserved 001 game with the combined-lens 002 build, then examines the testability-only bonus.</p>
+<nav aria-label="Report sections"><a href="#comparison">001 → 002</a><a href="#evidence">Recorded findings</a><a href="#screens">Terminal captures</a><a href="#bonus">Lens experiment</a><a href="#checks">Checks &amp; limits</a></nav>
+<div class="stats"><div class="stat"><strong>3</strong><span>preserved generations</span></div><div class="stat"><strong>1</strong><span>unchanged seed</span></div><div class="stat"><strong>2</strong><span>validator lens choices</span></div><div class="stat"><strong>39</strong><span>passing factory examples</span></div></div>
+<section><div class="callout"><h2>What changed with validation?</h2><p>The combined lens produced traceable testability changes: exported game-rule functions, injectable randomness, shape data separated from colors, and a board renderer that returns rows. Recorded findings also prompted clearer status text during development. Gameplay additions such as hard drop, restart, and different scoring are observable differences, but the recorded findings do not establish that validation caused them.</p></div></section>
+<section id="comparison"><h2>001 → 002</h2><p>001 used the original unvalidated loop. 002 used one validator with <strong>testability and usability</strong>. The factory generated all game code; this comparison did not edit the games.</p>
+<div class="table-wrap"><table><caption>Observed code and behavior</caption><thead><tr><th>Area</th><th>tetris-001</th><th>tetris-002 · combined lens</th></tr></thead><tbody><tr><th scope="row">Seed and startup</th><td>Same saved terminal-Tetris seed; npm start; 10×20 board.</td><td>Same saved seed; npm start; 10×20 board.</td></tr><tr><th scope="row">Core game rules</th><td>Module-level state; no exported API or import-safe entry point.</td><td>Exported collision, movement, rotation, drop, lock/spawn, line-clear, and scoring helpers; CLI guarded by require.main.</td></tr><tr><th scope="row">Deterministic checks</th><td>randomPiece calls Math.random internally.</td><td>createPiece and lockAndSpawn accept an RNG argument; deterministic piece selection works in an ordinary Node process.</td></tr><tr><th scope="row">Rendering</th><td>draw writes the whole display directly to stdout.</td><td>renderBoard returns board-row strings; the surrounding panel and status renderer still write ANSI output directly.</td></tr><tr><th scope="row">Automated checks included</th><td>No test script or included game test suite.</td><td>npm test is still the failing npm-init placeholder. Six independent rule checks and three display-state checks passed during this comparison; they are not an included game suite.</td></tr><tr><th scope="row">On-screen controls</th><td>Arrows move/rotate/soft drop; P pauses; Q quits.</td><td>Arrows move/rotate/soft drop; Space hard drops; P pauses; Q quits; R restarts after game over.</td></tr><tr><th scope="row">Line-clear points</th><td>40 / 100 / 300 / 1200, multiplied by level.</td><td>100 / 300 / 500 / 800, without a level multiplier. A generation difference without a matching recorded validator request.</td></tr><tr><th scope="row">Gravity and feel</th><td>800 ms initial gravity and a 500 ms lock delay.</td><td>1000 ms gravity; immediate lock when downward movement fails. No matching recorded finding establishes a validation effect.</td></tr><tr><th scope="row">Terminal display</th><td>Normal capture uses 23 rows; title and controls remain visible.</td><td>Normal capture uses 23 rows. Independent rendering checks also measure row 23 for pause and game over.</td></tr><tr><th scope="row">Exit smoke check</th><td>Q exits with code 0 and restores canonical/echo input modes.</td><td>Q exits with code 0 and restores canonical/echo input modes.</td></tr></tbody></table></div><p class="source"><a href="tetris-001/index.js">001 source</a> · <a href="tetris-002/index.js">002 source</a></p></section>
+<section id="evidence"><h2>Changes supported by recorded findings</h2><p>These changes match validator requests recorded under the active task in the plan. Other gameplay differences are listed separately above.</p><div class="evidence-grid"><article class="evidence"><span class="tag">Testability · plan 3.1–3.2</span><h3>An API that tests can call</h3><p>The validator asked for exported functions and an injectable RNG. The final source exports core rules behind an import-safe entry guard and accepts a supplied RNG in createPiece. Independent checks generated identical pieces with the same RNG and exercised collision and locking without a terminal.</p><p class="source"><a href="tetris-002/.factory/plan.md">Plan entries 3.1–3.2</a> · <a href="tetris-002/index.js">createPiece, lockAndSpawn, and module.exports</a></p></article><article class="evidence"><span class="tag">Testability · plan 3.3</span><h3>Shapes separated from colors</h3><p>The shape matrices now live in TETROMINO_SHAPES and ANSI colors in TETROMINO_COLORS. This matches the recorded request. Separation remains partial: locked board cells still store color strings, and rendered rows still contain ANSI codes.</p><p class="source"><a href="tetris-002/.factory/plan.md">Plan entry 3.3</a> · <a href="tetris-002/index.js">Shape/color definitions and lockPiece</a></p></article><article class="evidence"><span class="tag">Testability · plan 3.6</span><h3>Board rendering returns data</h3><p>The validator requested an alternative to writing directly to process.stdout. renderBoard now returns an array of 20 row strings. The independent check inspected row count and visible width without intercepting stdout.</p><p class="source"><a href="tetris-002/.factory/plan.md">Plan entry 3.6</a> · <a href="tetris-002/index.js">renderBoard</a></p></article><article class="evidence"><span class="tag">Usability · plan 3.4–3.5, 3.7–3.8</span><h3>Clearer status and controls</h3><p>Recorded findings asked to remove misleading preview/coming-next wording, stop advertising unwired actions, and fix an awkward split status label. Those development-stage messages were revised. The final game shows implemented controls and context-specific pause/game-over text; its additional gameplay features were planned separately.</p><p class="source"><a href="tetris-002/.factory/plan.md">Recorded status/controls subtasks</a> · <a href="tetris-002/index.js">renderPanel and renderStatus</a></p></article></div>
+<p class="muted">Plan entries 3.1–3.8 match validator requests observed during the run. Entries 9.1–9.6 were first added by the doer as verification/cleanup notes, so they are not counted as validator-origin findings. A later validator rejected insufficient verification evidence; interrupted calls did not retain a complete transcript of every finding. The plans are useful traces, not exhaustive execution logs.</p><details><summary>Original 001 plan</summary><pre class="plan"># Tetris-001 Plan
+
+1. [x] Initialize an npm project with `npm start` script and a clear entry file.
+2. [x] Render an empty bordered board within 24 terminal rows, with a side panel for score and controls.
+3. [x] Implement Tetris pieces (shapes, colors optional) and spawn them at the top of the board.
+4. [x] Implement piece movement: left, right, down, and rotation.
+5. [x] Implement collision detection, line clearing, and score tracking.
+6. [x] Add gravity/lock delay and game-over detection.
+7. [x] Add controls display and final polish/test under `npm start`.
+</pre></details><details><summary>Combined-lens 002 plan and recorded subtasks</summary><pre class="plan"># Tetris-002 Plan
+
+Seed: build a terminal Tetris that starts with `npm start`, keeps the whole
+display (board, score, controls, borders, game-over messages) within 24
+terminal rows, and may use packages for rendering/input.
+
+1. [x] Initialize an npm project with an `npm start` script and a clear entry file.
+2. [x] Render the full layout — bordered board, score, and controls — inside 24 rows.
+3. [x] Add the seven tetrominoes, random piece generation, and active-piece rendering.
+   3.1 Export createBoard, createPiece, and renderBoard so tests can drive piece logic without the CLI.
+   3.2 Make createPiece accept an injectable RNG so random generation tests are deterministic.
+   3.3 Separate tetromino shape matrices from ANSI color strings.
+   3.4 Update footer text to accurately describe the active-piece rendering.
+   3.5 Trim controls panel to only advertise actions wired in this task.
+   3.6 Make renderBoard return the rendered board as a string array instead of writing directly to process.stdout.
+   3.7 Fix awkward line split of &quot;Active piece&quot; / &quot;rendered.&quot; in the status panel.
+   3.8 Ensure the controls panel does not advertise move, rotate, drop, pause, or quit as coming next.
+4. [x] Add left/right movement and rotation with collision checks and wall kicks.
+5. [x] Add gravity, soft drop, hard drop, and piece locking.
+6. [x] Add completed-line clearing and scoring, shown live in the layout.
+7. [x] Add game-over detection with a message and restart, plus pause/quit.
+8. [x] Restore terminal state (input mode, cursor) on exit or interruption.
+9. [x] Verify `npm start` and confirm the display stays within 24 rows.
+   9.1 Confirm `npm start` launches the game without errors.
+   9.2 Measure rendered rows during normal play; ensure ≤ 24.
+   9.3 Measure rendered rows for the game-over screen; ensure ≤ 24.
+   9.4 Measure rendered rows for the paused screen; ensure ≤ 24.
+   9.5 Fix duplicate terminal cursor/reset output on exit paths.
+   9.6 Remove unused `renderFooter` helper left over from earlier layout iterations.
+</pre></details></section>
+<section id="screens"><h2>Captured in the terminal</h2><p>Live text snapshots from <code>npm start</code> in an 80-column, 24-row pseudo-terminal, captured after two seconds. Pieces are random; their positions are not a comparison metric. These are smoke checks, not a full playthrough.</p><div class="screens"><article class="terminal"><header><span>001 · unvalidated</span><small>80 × 24 terminal</small></header><pre>  TERMINAL TETRIS
+╔══════════╗  SCORE       0
+║          ║  LINES       0
+║          ║  LEVEL       1
+║   ████   ║
+║          ║  CONTROLS
+║          ║  ← →  move
+║          ║  ↑    rotate
+║          ║  ↓    soft drop
+║          ║  p    pause
+║          ║  q    quit
+║          ║
+║          ║
+║          ║
+║          ║
+║          ║
+║          ║
+║          ║
+║          ║
+║          ║
+║          ║
+║          ║
+╚══════════╝</pre><footer>Live npm start capture · quit exit code 0</footer></article><article class="terminal"><header><span>002 · testability + usability</span><small>80 × 24 terminal</small></header><pre>┌──────────┐  TETRIS
+│          │
+│    ██    │  Score
+│    ██    │  0
+│          │
+│          │  Level
+│          │  1
+│          │
+│          │  Lines
+│          │  0
+│          │
+│          │
+│          │  Controls
+│          │  ← / → move
+│          │  ↑ rotate
+│          │  ↓ soft drop
+│          │  space hard drop
+│          │  P pause
+│          │  Q quit
+│          │
+│          │
+└──────────┘
+Move ←/→  Rotate ↑  Soft drop ↓  Hard drop space</pre><footer>Live npm start capture · quit exit code 0</footer></article></div></section>
+<section id="bonus"><h2>Bonus: testability alone</h2><p>Both 002 builds used the same saved seed and the configured <code>pi</code> model, <code>openrouter/moonshotai/kimi-k2.7-code</code>. The bonus target changed the lens to testability alone. Each target generated its own plan.</p><div class="callout"><p>The testability-only build includes ten passing Node tests and a pure full-frame generator, but has no recorded validator-rejection subtasks. Its one nested plan item fixes the doer&#x27;s own failing test expectation. The live 24-row terminal capture reveals a title-clipping issue that the frame-length tests miss. These are useful observed differences; independently generated plans and model variation prevent attributing them to the lens alone.</p></div><div class="table-wrap" style="margin-top:24px"><table><caption>Combined lens vs. testability alone</caption><thead><tr><th>Area</th><th>Combined lens</th><th>Testability alone</th></tr></thead><tbody><tr><th scope="row">Included game tests</th><td>No working npm test script; separate comparison checks passed.</td><td>npm test runs 10 passing node:test cases: board rendering, line clearing, scoring, controls, dimensions, and game-over text.</td></tr><tr><th scope="row">Rendering seam</th><td>Board rows returned as strings; full layout still writes ANSI directly.</td><td>generateFrame returns the whole display as a pure string; render performs the terminal writes.</td></tr><tr><th scope="row">Piece selection</th><td>Injectable RNG for createPiece and lockAndSpawn.</td><td>createPiece accepts an explicit shape key for deterministic tests; default selection still uses Math.random.</td></tr><tr><th scope="row">Recorded findings</th><td>Eight validator-origin subtasks under task 3; additional self-added verification notes under task 9.</td><td>No validator-rejection findings recorded. One self-added subtask corrected a line-clear test expectation.</td></tr><tr><th scope="row">Controls and features</th><td>Space hard drop, P pause, and R restart after game over.</td><td>Space/Up rotate, arrows move, Q quits. No hard drop, pause, or restart implementation.</td></tr><tr><th scope="row">Scoring and speed</th><td>100 / 300 / 500 / 800 points; 1000 ms gravity.</td><td>40 / 100 / 300 / 1200 × level; 500 ms gravity. These differ without matching validator requests.</td></tr><tr><th scope="row">24-row terminal behavior</th><td>Uses cursor positioning through row 23; title remains visible.</td><td>generateFrame returns 24 rows, then render appends a newline. In an exactly 24-row viewport, that scrolls the first title row off screen. The captured viewport has 23 nonblank rows and no TETRIS title.</td></tr><tr><th scope="row">Other usability detail</th><td>Final panel lists implemented actions.</td><td>Panel includes a Next piece label with no preview content. The testability-only validator did not request a fix.</td></tr><tr><th scope="row">Q exit</th><td>Exit code 0; input mode restored.</td><td>Exit code 0; input mode restored.</td></tr></tbody></table></div><p class="source"><a href="tetris-002-testability/index.js">Testability-only source</a> · <a href="tetris-002-testability/test/render.test.js">Frame tests</a> · <a href="tetris-002-testability/test/board.test.js">Board and scoring tests</a></p><div class="screens" style="margin-top:24px"><article class="terminal"><header><span>002 · testability alone</span><small>80 × 24 terminal</small></header><pre>+--------------------+
+|                    |   Next piece:
+|                    |
+|                    |
+|        [][]        |   Score
+|      [][]          |       0
+|                    |
+|                    |   Lines
+|                    |       0
+|                    |
+|                    |   Level
+|                    |    1
+|                    |
+|                    |   Controls
+|                    |   left  - move
+|                    |   down  - move
+|                    |   right - move
+|                    |   space - rotate
+|                    |   q     - quit
+|                    |
+|                    |
++--------------------+
+ Controls: Left/Down/Right move   Space: rotate   Q: quit</pre><footer>Live npm start capture · quit exit code 0</footer></article></div><details><summary>Testability-only plan and recorded subtasks</summary><pre class="plan"># Tetris plan
+
+From `/workspaces/my-factory-starter/tetris/spec.md`:
+
+- [x] Set up `npm start` entry point.
+- [x] Render the complete game display within 24 terminal rows.
+- [x] Draw the Tetris board with borders.
+- [x] Implement Tetris pieces and their movement.
+- [x] Implement line clearing and scoring.
+  - [x] Fix single-line-clear test expectation so rows shift down correctly.
+- [x] Show score and controls on screen.
+- [x] Detect game over and display a game-over message.
+</pre></details></section>
+<section id="checks"><h2>Checks and limits</h2><ul><li>Factory: cd factory &amp;&amp; mix test — 39 examples passed, 0 failures; 7 real-agent examples excluded. The excluded Gherkin examples were not run.</li><li>Public entry point: bin/factory with no arguments reported &#x27;a target is required&#x27;. Both 002 games were then generated through bin/factory with real pi calls and reached complete: true.</li><li>tetris-002: six independent Node checks passed for board dimensions, deterministic piece generation, collision boundaries, hard-drop floor landing, line clearing/scoring, and inspectable board rendering.</li><li>tetris-002: independent ANSI cursor-position checks measured maximum row 23 in normal, paused, and game-over rendering.</li><li>tetris-002-testability: npm --prefix tetris/tetris-002-testability test — 10 tests passed, 0 failures.</li><li>All three npm start commands launched in an 80×24 pseudo-terminal. Sending Q exited with code 0 and restored canonical/echo input modes. Live text captures appear above.</li><li>The original tetris-001 game and shared seed are unchanged from the iteration-002 adoption commit. Both new targets have completed top-level plans and no uncommitted target changes.</li></ul><h3>How to interpret this comparison</h3><ul><li>This is an exploratory comparison, not a controlled causal experiment. Each build generated its own plan and code. Shared seed/model settings do not remove model variation.</li><li>The combined build exposed factory prompt gaps around completion, current-task scope, and the planner/doer handoff. Those prompts were refined during the exercise. Several runs resumed saved work, and one silent agent call was restarted; the bonus also resumed after a malformed planner result was rejected. Timing is not compared.</li><li>No validator-rejection findings are recorded in the testability-only plan. Its self-recorded test-expectation fix does not establish an effect of validator feedback.</li><li>Validator approval does not imply a defect-free game. The combined game still couples some state/rendering to ANSI, has no included working npm test suite, and keeps pause/restart coordination in the CLI. The bonus&#x27;s ten passing tests miss its live title-scrolling issue.</li><li>Startup, Q exit, exported rules, and selected rendering states were checked. Neither game received a complete human playthrough during this comparison. Preferences about feel, readability, and enjoyment remain for you to assess by playing.</li></ul><h3>Try the games</h3><pre class="command">npm --prefix tetris/tetris-001 start
+npm --prefix tetris/tetris-002 start
+npm --prefix tetris/tetris-002-testability start
+
+# Homework suite (excludes real-agent examples)
+cd factory &amp;&amp; mix test</pre><p>Run each game in a separate terminal. Use its on-screen controls. Choose the result you prefer based on playing it; the report distinguishes inspected behavior from that personal judgement.</p></section>
+<div class="closing">Sources: <a href="spec.md">shared seed</a> · <a href="../factory/VALIDATOR.md">combined validator lens</a> · game source and committed plans linked above. All report styling is local; no external assets or network requests.</div>
+</main></body></html>

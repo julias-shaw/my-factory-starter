@@ -8,5 +8,5 @@ From `/workspaces/my-factory-starter/tetris/spec.md`:
 - [x] Implement Tetris pieces and their movement.
 - [x] Implement line clearing and scoring.
   - [x] Fix single-line-clear test expectation so rows shift down correctly.
-- [ ] Show score and controls on screen.
+- [x] Show score and controls on screen.
 - [ ] Detect game over and display a game-over message.

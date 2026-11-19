@@ -7,5 +7,6 @@ From `/workspaces/my-factory-starter/tetris/spec.md`:
 - [x] Draw the Tetris board with borders.
 - [x] Implement Tetris pieces and their movement.
 - [ ] Implement line clearing and scoring.
+  - [x] Fix single-line-clear test expectation so rows shift down correctly.
 - [ ] Show score and controls on screen.
 - [ ] Detect game over and display a game-over message.

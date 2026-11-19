@@ -142,6 +142,29 @@ function lockPiece(board, piece) {
   });
 }
 
+function clearFullLines(board) {
+  let cleared = 0;
+  for (let y = HEIGHT - 1; y >= 0; y--) {
+    if (board[y].every(cell => cell)) {
+      board.splice(y, 1);
+      board.unshift(Array(WIDTH).fill(0));
+      cleared++;
+      y++; // recheck the row that shifted down into this slot
+    }
+  }
+  return cleared;
+}
+
+const LINE_POINTS = [0, 40, 100, 300, 1200];
+
+function awardPoints(state, cleared) {
+  if (cleared > 0 && cleared <= 4) {
+    state.score += LINE_POINTS[cleared] * state.level;
+    state.lines += cleared;
+    state.level = Math.floor(state.lines / 10) + 1;
+  }
+}
+
 function overlayPiece(board, piece) {
   const copy = board.map(row => row.slice());
   if (!piece) return copy;
@@ -244,6 +267,8 @@ function tick(state) {
   }
   if (state.piece && !movePiece(state.board, state.piece, 0, 1)) {
     lockPiece(state.board, state.piece);
+    const cleared = clearFullLines(state.board);
+    awardPoints(state, cleared);
     spawnPiece(state);
   }
   render(state);
@@ -339,4 +364,6 @@ module.exports = {
   tryRotatePiece,
   lockPiece,
   overlayPiece,
+  clearFullLines,
+  awardPoints,
 };

@@ -167,6 +167,10 @@ function hardDrop(board, piece) {
   return current;
 }
 
+function softDrop(board, piece) {
+  return movePiece(board, piece, 0, 1);
+}
+
 function renderBoard(board, activePiece) {
   const rows = [];
   for (let y = 0; y < BOARD_HEIGHT; y++) {
@@ -261,6 +265,7 @@ module.exports = {
   rotatePiece,
   lockPiece,
   hardDrop,
+  softDrop,
   renderBoard,
   renderPanel,
   renderFooter,
@@ -292,7 +297,7 @@ if (require.main === module) {
 
   function tick() {
     if (gameOver) return;
-    const moved = movePiece(board, activePiece, 0, 1);
+    const moved = softDrop(board, activePiece);
     if (moved) {
       activePiece = moved;
     } else {
@@ -327,7 +332,7 @@ if (require.main === module) {
     } else if (key.name === 'up') {
       activePiece = rotatePiece(board, activePiece) || activePiece;
     } else if (key.name === 'down') {
-      const moved = movePiece(board, activePiece, 0, 1);
+      const moved = softDrop(board, activePiece);
       if (moved) {
         activePiece = moved;
       } else {

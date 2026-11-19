@@ -9,4 +9,4 @@ From `/workspaces/my-factory-starter/tetris/spec.md`:
 - [x] Implement line clearing and scoring.
   - [x] Fix single-line-clear test expectation so rows shift down correctly.
 - [x] Show score and controls on screen.
-- [ ] Detect game over and display a game-over message.
+- [x] Detect game over and display a game-over message.

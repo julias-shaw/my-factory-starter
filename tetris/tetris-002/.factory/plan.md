@@ -21,3 +21,9 @@ terminal rows, and may use packages for rendering/input.
 7. [x] Add game-over detection with a message and restart, plus pause/quit.
 8. [x] Restore terminal state (input mode, cursor) on exit or interruption.
 9. Verify `npm start` and confirm the display stays within 24 rows.
+   9.1 Confirm `npm start` launches the game without errors.
+   9.2 Measure rendered rows during normal play; ensure ≤ 24.
+   9.3 Measure rendered rows for the game-over screen; ensure ≤ 24.
+   9.4 Measure rendered rows for the paused screen; ensure ≤ 24.
+   9.5 Fix duplicate terminal cursor/reset output on exit paths.
+   9.6 Remove unused `renderFooter` helper left over from earlier layout iterations.

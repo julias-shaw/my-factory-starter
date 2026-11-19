@@ -256,14 +256,6 @@ function renderPanel(stats = createStats()) {
   process.stdout.write(moveTo(19, panelLeft) + 'Q quit');
 }
 
-function renderFooter(gameOver = false) {
-  const footerRow = BOARD_HEIGHT + 3;
-  const text = gameOver
-    ? 'GAME OVER - R restart | Q quit'
-    : 'Move ←/→  Rotate ↑  Soft drop ↓  Hard drop space';
-  process.stdout.write(moveTo(footerRow, 1) + ANSI.yellow + text + ANSI.reset);
-}
-
 function renderStatus({ paused = false, gameOver = false } = {}) {
   const footerRow = BOARD_HEIGHT + 3;
   let text;
@@ -290,7 +282,10 @@ function render(board, activePiece, stats, { paused = false } = {}) {
   renderStatus({ paused, gameOver: !activePiece });
 }
 
+let cleanedUp = false;
 function cleanup() {
+  if (cleanedUp) return;
+  cleanedUp = true;
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
@@ -321,7 +316,6 @@ module.exports = {
   softDrop,
   renderBoard,
   renderPanel,
-  renderFooter,
   render
 };
 

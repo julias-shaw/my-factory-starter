@@ -4,7 +4,8 @@
   "description": "Terminal Tetris game",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node --test"
   },
   "keywords": ["tetris", "terminal"],
   "author": "",

@@ -16,7 +16,7 @@ terminal rows, and may use packages for rendering/input.
    3.7 Fix awkward line split of "Active piece" / "rendered." in the status panel.
    3.8 Ensure the controls panel does not advertise move, rotate, drop, pause, or quit as coming next.
 4. [x] Add left/right movement and rotation with collision checks and wall kicks.
-5. Add gravity, soft drop, hard drop, and piece locking.
+5. [x] Add gravity, soft drop, hard drop, and piece locking.
 6. Add completed-line clearing and scoring, shown live in the layout.
 7. Add game-over detection with a message and restart, plus pause/quit.
 8. Restore terminal state (input mode, cursor) on exit or interruption.

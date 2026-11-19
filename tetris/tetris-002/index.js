@@ -294,8 +294,7 @@ function cleanup() {
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
-  process.stdout.write(ANSI.showCursor);
-  process.exit(0);
+  process.stdout.write(ANSI.showCursor + ANSI.reset);
 }
 
 module.exports = {
@@ -337,6 +336,7 @@ if (require.main === module) {
   function stopGame() {
     clearInterval(gravityInterval);
     cleanup();
+    process.exit(0);
   }
 
   function restartGame() {
@@ -440,4 +440,15 @@ if (require.main === module) {
 
   process.on('SIGINT', stopGame);
   process.on('SIGTERM', stopGame);
+  process.on('exit', cleanup);
+  process.on('uncaughtException', (err) => {
+    cleanup();
+    console.error(err);
+    process.exit(1);
+  });
+  process.on('unhandledRejection', (reason) => {
+    cleanup();
+    console.error('Unhandled rejection:', reason);
+    process.exit(1);
+  });
 }

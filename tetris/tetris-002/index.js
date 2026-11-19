@@ -44,6 +44,16 @@ const TETROMINO_COLORS = {
 
 const PIECE_NAMES = Object.keys(TETROMINO_SHAPES);
 
+const WALL_KICK_OFFSETS = [
+  [0, 0],
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [-2, 0],
+  [2, 0],
+  [0, 1]
+];
+
 function moveTo(row, col) {
   return `\x1b[${row};${col}H`;
 }
@@ -76,6 +86,59 @@ function createPiece(rng = Math.random) {
     y: 0,
     matrix
   };
+}
+
+function rotateMatrix(matrix) {
+  const rows = matrix.length;
+  const cols = matrix[0].length;
+  const rotated = Array.from({ length: cols }, () => Array(rows).fill(0));
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (matrix[y][x]) {
+        rotated[x][rows - 1 - y] = matrix[y][x];
+      }
+    }
+  }
+  return rotated;
+}
+
+function isValidPosition(board, piece) {
+  for (let y = 0; y < piece.matrix.length; y++) {
+    for (let x = 0; x < piece.matrix[y].length; x++) {
+      if (piece.matrix[y][x]) {
+        const boardX = piece.x + x;
+        const boardY = piece.y + y;
+        if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
+          return false;
+        }
+        if (boardY >= 0 && board[boardY][boardX]) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+function movePiece(board, piece, dx, dy) {
+  const moved = { ...piece, x: piece.x + dx, y: piece.y + dy };
+  return isValidPosition(board, moved) ? moved : null;
+}
+
+function rotatePiece(board, piece) {
+  const rotatedMatrix = rotateMatrix(piece.matrix);
+  for (const [dx, dy] of WALL_KICK_OFFSETS) {
+    const rotated = {
+      ...piece,
+      x: piece.x + dx,
+      y: piece.y + dy,
+      matrix: rotatedMatrix
+    };
+    if (isValidPosition(board, rotated)) {
+      return rotated;
+    }
+  }
+  return null;
 }
 
 function renderBoard(board, activePiece) {
@@ -119,8 +182,9 @@ function renderPanel() {
   process.stdout.write(moveTo(9, panelLeft) + ANSI.bold + 'Lines' + ANSI.reset);
   process.stdout.write(moveTo(10, panelLeft) + '0');
 
-  process.stdout.write(moveTo(13, panelLeft) + ANSI.bold + 'Status' + ANSI.reset);
-  process.stdout.write(moveTo(14, panelLeft) + 'Active piece rendered.');
+  process.stdout.write(moveTo(13, panelLeft) + ANSI.bold + 'Controls' + ANSI.reset);
+  process.stdout.write(moveTo(14, panelLeft) + '← / → move');
+  process.stdout.write(moveTo(15, panelLeft) + '↑ rotate');
 }
 
 function renderFooter() {
@@ -128,7 +192,7 @@ function renderFooter() {
   process.stdout.write(
     moveTo(footerRow, 1) +
     ANSI.yellow +
-    'Active tetromino rendered.' +
+    'Move with ← / →, rotate with ↑.' +
     ANSI.reset
   );
 }
@@ -147,6 +211,9 @@ function render(board, activePiece) {
 }
 
 function cleanup() {
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(false);
+  }
   process.stdout.write(ANSI.showCursor);
   process.exit(0);
 }
@@ -158,8 +225,13 @@ module.exports = {
   TETROMINO_SHAPES,
   TETROMINO_COLORS,
   PIECE_NAMES,
+  WALL_KICK_OFFSETS,
   createBoard,
   createPiece,
+  rotateMatrix,
+  isValidPosition,
+  movePiece,
+  rotatePiece,
   renderBoard,
   renderPanel,
   renderFooter,
@@ -168,21 +240,35 @@ module.exports = {
 
 if (require.main === module) {
   const board = createBoard();
-  const activePiece = createPiece();
+  let activePiece = createPiece();
 
   process.stdout.write(ANSI.hideCursor);
   render(board, activePiece);
 
-  const renderInterval = setInterval(() => {
-    render(board, activePiece);
-  }, 1000);
+  const readline = require('readline');
+  readline.emitKeypressEvents(process.stdin);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+  }
+  process.stdin.setEncoding('utf8');
+  process.stdin.resume();
 
-  process.on('SIGINT', () => {
-    clearInterval(renderInterval);
-    cleanup();
+  process.stdin.on('keypress', (str, key) => {
+    if (!key) return;
+    if (key.ctrl && key.name === 'c') {
+      cleanup();
+      return;
+    }
+    if (key.name === 'left') {
+      activePiece = movePiece(board, activePiece, -1, 0) || activePiece;
+    } else if (key.name === 'right') {
+      activePiece = movePiece(board, activePiece, 1, 0) || activePiece;
+    } else if (key.name === 'up') {
+      activePiece = rotatePiece(board, activePiece) || activePiece;
+    }
+    render(board, activePiece);
   });
-  process.on('SIGTERM', () => {
-    clearInterval(renderInterval);
-    cleanup();
-  });
+
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
 }

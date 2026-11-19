@@ -6,7 +6,7 @@ terminal rows, and may use packages for rendering/input.
 
 1. [x] Initialize an npm project with an `npm start` script and a clear entry file.
 2. [x] Render the full layout — bordered board, score, and controls — inside 24 rows.
-3. Add the seven tetrominoes, random piece generation, and active-piece rendering.
+3. [x] Add the seven tetrominoes, random piece generation, and active-piece rendering.
    3.1 Export createBoard, createPiece, and renderBoard so tests can drive piece logic without the CLI.
    3.2 Make createPiece accept an injectable RNG so random generation tests are deterministic.
    3.3 Separate tetromino shape matrices from ANSI color strings.

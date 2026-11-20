@@ -11,6 +11,7 @@ if is_nil(index) or Enum.at(args, index + 1) != Path.join(folder, "AGENTS.md"),
 unless "--no-context-files" in args, do: raise("target instruction discovery must be disabled")
 instructions = File.read!(Path.join(folder, "AGENTS.md"))
 File.write!(Path.join(__DIR__, "call-#{role}-#{call}.args"), instructions <> "\n" <> prompt)
+File.write!(Path.join(__DIR__, "calls.log"), role <> "\n", [:append])
 login = cond do
   File.regular?(Path.join(folder, "auth.json")) -> "login"
   System.get_env("ANTHROPIC_API_KEY") not in [nil, ""] -> "api-key"

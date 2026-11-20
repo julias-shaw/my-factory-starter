@@ -21,7 +21,7 @@ Every machine needs its own login file: copy `~/.pi/agent/auth.json`,
 `~/.claude/.credentials.json`, or `~/.codex/auth.json` into its folder,
 according to its harness. Alternatively, set the provider's API key in the
 environment. Codex uses `CODEX_API_KEY`; Claude uses `ANTHROPIC_API_KEY`.
-The factory checks all three machines before calling any of them.
+The factory checks every machine named on the assembly line before calling any of them.
 
 The per-machine `.gitignore` keeps logins, sessions, and caches out of Git.
 Only authored configuration files are allowed through it. Refresh a copied

@@ -90,8 +90,7 @@ defmodule Factory.CLI do
         strict: [
           seed: :string,
           target: :string,
-          attempts: :integer,
-          all: :boolean
+          attempts: :integer
         ]
       )
 
@@ -114,13 +113,21 @@ defmodule Factory.CLI do
       true ->
         target = Path.expand(opts[:target])
         seed = Path.expand(opts[:seed])
-        machines = Map.new(~w(planner doer validator), &{&1, machine(&1)})
+        line_folder = Path.expand("../../assembly-lines/careful", __DIR__)
+
+        line =
+          case Factory.AssemblyLine.load(line_folder) do
+            {:ok, line} -> line
+            {:error, message} -> fail(message)
+          end
+
+        machines = Map.new(Factory.AssemblyLine.machines(line), &{&1, machine(line, &1)})
         Enum.each(machines, fn {role, machine} -> check_login!(role, machine) end)
 
         config = %{
           machines: machines,
           attempts: opts[:attempts] || 3,
-          all: opts[:all] || false
+          line: line
         }
 
         File.mkdir_p!(target)
@@ -137,8 +144,8 @@ defmodule Factory.CLI do
     end
   end
 
-  defp machine(role) do
-    folder = Path.expand("../../machines/#{role}", __DIR__)
+  defp machine(line, role) do
+    folder = Path.join([line.folder, "machines", role])
     settings = folder |> Path.join("machine.json") |> File.read!() |> :json.decode()
     harness = settings["harness"] || "pi"
     harness = if String.contains?(harness, "/"), do: Path.expand(harness, folder), else: harness
@@ -211,98 +218,94 @@ defmodule Factory.CLI do
   end
 
   defp run(target, seed, config) do
-    had_plan = File.exists?(Path.join(target, ".factory/plan.md"))
+    state = %{attempts: 0, work_result: nil, findings: []}
+    follow("start", %{}, target, seed, config, state)
+  end
 
-    result =
-      planner(
-        target,
-        seed,
-        config,
-        "Inspect the plan without changing it. If it is missing, write a short plan from the seed; do no product work."
-      )
-
-    complete = complete!(result)
-
-    cond do
-      complete or not had_plan ->
-        commit(target)
-        report(result)
-
-        if config.all and not complete,
-          do: run(target, seed, config),
-          else: IO.puts("factory stopped")
-
-      true ->
-        work_result = attempt(target, seed, config, config.attempts, [])
-        commit(target)
-
-        result =
-          planner(
-            target,
-            seed,
-            config,
-            """
-            The task's work has been committed. The accepted doer result was:
-            #{work_result}
-            Identify the corresponding task in the plan and mark it done.
-            Do not merely report that an earlier task is already done.
-            Then report whether every task is complete.
-            """
-          )
-
-        complete = complete!(result)
-        commit(target)
-        report(result)
-
-        if config.all and not complete,
-          do: run(target, seed, config),
-          else: IO.puts("factory stopped")
+  defp follow(node, result, target, seed, config, state) do
+    case Factory.AssemblyLine.next(config.line, node, result) do
+      {:ok, "finish"} -> IO.puts("factory stopped")
+      {:ok, next} -> visit(next, target, seed, config, state)
+      {:error, message} -> fail(message)
     end
   end
 
-  defp planner(target, seed, config, instruction) do
-    answer =
-      invoke(target, config.machines["planner"], "planner", """
-      #{paths(target, seed)}
-      #{instruction}
-      Finish with a single line of JSON containing the boolean field "complete".
-      """)
+  defp visit(role, target, seed, config, state) do
+    if role == "doer" and state.attempts >= config.attempts, do: fail("a task hit its limit")
 
-    read_result!(answer, "planner")
-  end
+    # A return to the planner accepts the task's work. Commit before asking it
+    # to record completion, then commit its plan update separately.
+    if role == "planner" and state.work_result, do: commit(target)
 
-  defp complete!(%{"complete" => complete}) when is_boolean(complete), do: complete
-  defp complete!(_), do: fail("could not read the planner's result")
+    fields = Factory.AssemblyLine.fields(config.line, role)
+    required = Enum.map_join(fields, ", ", &inspect/1)
 
-  defp attempt(_target, _seed, _config, 0, _findings), do: fail("pass hit its limit")
+    result_request =
+      if required == "",
+        do: "describing the work you did",
+        else: "containing boolean fields #{required}"
 
-  defp attempt(target, seed, config, remaining, findings) do
-    work_result =
-      invoke(target, config.machines["doer"], "doer", """
-      #{paths(target, seed)}
-      Validator findings: #{IO.iodata_to_binary(:json.encode(findings))}
-      Finish with a single line of JSON describing the work you did.
-      """)
+    result_request =
+      if role == "validator",
+        do: result_request <> " and array \"findings\"",
+        else: result_request
 
     answer =
-      invoke(target, config.machines["validator"], "validator", """
+      invoke(target, config.machines[role], role, """
       #{paths(target, seed)}
-      Current task's work (changes since the last commit):
-      #{work(target)}
-      Finish with a single line of JSON containing boolean "satisfied" and array "findings".
+      #{instruction(role, target, state)}
+      Finish with a single line of JSON #{result_request}.
       """)
 
-    case read_result!(answer, "validator") do
-      %{"satisfied" => true, "findings" => findings} when is_list(findings) ->
-        work_result
+    result = read_result!(answer, role)
+    unless is_map(result), do: fail("could not read the #{role}'s result")
 
-      %{"satisfied" => false, "findings" => findings} when is_list(findings) ->
-        attempt(target, seed, config, remaining - 1, findings)
+    if role == "validator" and not is_list(result["findings"]),
+      do: fail("could not read the validator's result")
 
-      _ ->
-        fail("could not read the validator's result")
-    end
+    state =
+      case role do
+        "planner" ->
+          commit(target)
+          %{state | attempts: 0, work_result: nil, findings: []}
+
+        "doer" ->
+          %{state | attempts: state.attempts + 1, work_result: answer}
+
+        "validator" ->
+          %{state | findings: result["findings"]}
+
+        _ ->
+          state
+      end
+
+    report(result)
+    follow(role, result, target, seed, config, state)
   end
+
+  defp instruction("planner", _target, %{work_result: nil}) do
+    "Inspect the plan without changing it. If it is missing, write a short plan from the seed; do no product work."
+  end
+
+  defp instruction("planner", _target, state) do
+    """
+    The task's work has been committed. The accepted doer result was:
+    #{state.work_result}
+    Identify the corresponding task in the plan and mark it done.
+    Do not merely report that an earlier task is already done.
+    Then report whether every task is complete.
+    """
+  end
+
+  defp instruction("doer", _target, state) do
+    "Validator findings: #{IO.iodata_to_binary(:json.encode(state.findings))}"
+  end
+
+  defp instruction("validator", target, _state) do
+    "Current task's work (changes since the last commit):\n#{work(target)}"
+  end
+
+  defp instruction(_role, _target, _state), do: ""
 
   defp paths(target, seed) do
     """

@@ -14,8 +14,26 @@ defmodule FactorySteps do
     File.mkdir_p!(copy)
     ExUnit.Callbacks.on_exit(fn -> File.rm_rf!(workspace) end)
 
-    for path <- ["run", "cli.exs", "lib", "machines"] do
+    for path <- ["run", "cli.exs", "lib"] do
       File.cp_r!(Path.join(source, path), Path.join(copy, path))
+    end
+
+    # Copy authored configuration only; never copy the student's credentials or sessions.
+    for path <- Path.wildcard(Path.join(source, "assembly-lines/**/*"), match_dot: true),
+        File.regular?(path),
+        Path.basename(path) in [
+          "assembly-line.dot",
+          "AGENTS.md",
+          "CLAUDE.md",
+          "machine.json",
+          "settings.json",
+          ".gitignore",
+          "config.toml",
+          "README.md"
+        ] do
+      destination = Path.join(copy, Path.relative_to(path, source))
+      File.mkdir_p!(Path.dirname(destination))
+      File.cp!(path, destination)
     end
 
     git!(workspace, ["init", "-q"])
@@ -55,7 +73,7 @@ defmodule FactorySteps do
     File.chmod!(chosen, 0o755)
 
     for role <- ["planner", "doer", "validator"] do
-      folder = Path.join(context.factory, "machines/#{role}")
+      folder = Path.join(context.factory, "assembly-lines/careful/machines/#{role}")
 
       File.write!(
         Path.join(folder, "machine.json"),
@@ -82,8 +100,8 @@ defmodule FactorySteps do
     configure(context, "validator", %{"provider" => "anthropic"})
   end
 
-  step "the factory runs one pass", context do
-    run_factory(context, false)
+  step "the factory runs", context do
+    run_factory(context)
   end
 
   step "pi has been called", context do
@@ -127,7 +145,7 @@ defmodule FactorySteps do
   end
 
   step "the plan has the tasks {string} and {string}, and no others", %{args: [a, b]} = context do
-    assert tasks(context) == [{a, false}, {b, false}]
+    assert Enum.map(tasks(context), &elem(&1, 0)) == [a, b]
     context
   end
 
@@ -168,6 +186,17 @@ defmodule FactorySteps do
     context
   end
 
+  step "the planner was called before the doer", context do
+    roles =
+      File.read!(Path.join(context.chosen_dir, "calls.log")) |> String.split("\n", trim: true)
+
+    planner = Enum.find_index(roles, &(&1 == "planner"))
+    doer = Enum.find_index(roles, &(&1 == "doer"))
+    assert is_integer(planner) and is_integer(doer)
+    assert planner < doer
+    context
+  end
+
   step "the planner was asked for a result with the field {string}", %{args: [field]} = context do
     [call | _] = calls(context, "planner")
     args = File.read!(call)
@@ -182,7 +211,7 @@ defmodule FactorySteps do
   end
 
   step "the factory runs to completion", context do
-    run_factory(context, true)
+    run_factory(context)
   end
 
   step "the agent has been called once", context do
@@ -402,14 +431,14 @@ defmodule FactorySteps do
 
   step "the factory builds the target {string} to completion", %{args: [name]} = context do
     context = Map.put(context, :target, Path.join(context.workspace, name))
-    context = run_factory(context, true)
+    context = run_factory(context)
     assert context.status == 0, context.output
     saved = Map.put_new(context[:snapshots] || %{}, name, snapshot(context.target))
     Map.put(context, :snapshots, saved)
   end
 
   step "the factory builds the same target using its absolute path", context do
-    run_factory(Map.put(context, :absolute_target, true), true)
+    run_factory(Map.put(context, :absolute_target, true))
   end
 
   step "the target {string} is unchanged", %{args: [name]} = context do
@@ -463,7 +492,7 @@ defmodule FactorySteps do
     context
   end
 
-  step "the factory allows at most three attempts per pass", context do
+  step "the factory allows at most three attempts at a task", context do
     Map.put(context, :attempts, 3)
   end
 
@@ -495,9 +524,9 @@ defmodule FactorySteps do
     context
   end
 
-  step "it reports that the pass hit its limit", context do
+  step "it reports that a task hit its limit", context do
     assert context.status != 0
-    assert context.output =~ "pass hit its limit"
+    assert context.output =~ "task hit its limit"
     Map.put(context, :expected_status, 1)
   end
 
@@ -546,12 +575,16 @@ defmodule FactorySteps do
   end
 
   step "the doer has its own login", context do
-    File.write!(Path.join(context.factory, "machines/doer/auth.json"), "{\"test\":true}")
+    File.write!(
+      Path.join(context.factory, "assembly-lines/careful/machines/doer/auth.json"),
+      "{\"test\":true}"
+    )
+
     context
   end
 
   step "the doer has no login", context do
-    File.rm(Path.join(context.factory, "machines/doer/auth.json"))
+    File.rm(Path.join(context.factory, "assembly-lines/careful/machines/doer/auth.json"))
     context
   end
 
@@ -565,7 +598,10 @@ defmodule FactorySteps do
 
   step "there is no API key for the doer's provider", context do
     for role <- ["planner", "validator"] do
-      File.write!(Path.join(context.factory, "machines/#{role}/auth.json"), "{}")
+      File.write!(
+        Path.join(context.factory, "assembly-lines/careful/machines/#{role}/auth.json"),
+        "{}"
+      )
     end
 
     Map.put(
@@ -588,8 +624,11 @@ defmodule FactorySteps do
   end
 
   step "the doer's login is ignored by Git", context do
-    assert git!(context.workspace, ["check-ignore", "factory/machines/doer/auth.json"]) ==
-             "factory/machines/doer/auth.json"
+    assert git!(context.workspace, [
+             "check-ignore",
+             "factory/assembly-lines/careful/machines/doer/auth.json"
+           ]) ==
+             "factory/assembly-lines/careful/machines/doer/auth.json"
 
     context
   end
@@ -620,11 +659,130 @@ defmodule FactorySteps do
     context
   end
 
+  step "this assembly line:", context do
+    File.write!(line_path(context), context.docstring)
+    context
+  end
+
+  step "the factory reads the assembly line", context do
+    Map.put(context, :line_result, Factory.AssemblyLine.load(Path.dirname(line_path(context))))
+  end
+
+  step "it accepts it", context do
+    assert {:ok, _} = context.line_result
+    context
+  end
+
+  step "it refuses it", context do
+    assert {:error, _} = context.line_result
+    context
+  end
+
+  step "the validator has been taken out, so the doer goes straight to the planner", context do
+    source = File.read!(line_path(context))
+    source = Regex.replace(~r/^.*validator.*\n?/m, source, "")
+    source = String.replace(source, "}", "  doer -> planner\n}")
+    File.write!(line_path(context), source)
+    context
+  end
+
+  step "{string} is misspelt {string} throughout the assembly line",
+       %{args: [from, to]} = context do
+    File.write!(line_path(context), String.replace(File.read!(line_path(context)), from, to))
+    context
+  end
+
+  step "the edge from validator to planner has been taken out", context do
+    source =
+      Regex.replace(
+        ~r/^\s*validator\s*->\s*planner[^\n]*\n?/m,
+        File.read!(line_path(context)),
+        ""
+      )
+
+    File.write!(line_path(context), source)
+    context
+  end
+
+  step "it reports that it has no machine called {string}", %{args: [name]} = context do
+    assert {:error, message} = context.line_result
+    assert message =~ "no machine called #{name}"
+    context
+  end
+
+  step "it reports that finish cannot be reached from validator", context do
+    assert {:error, message} = context.line_result
+    assert message =~ "finish cannot be reached from validator"
+    context
+  end
+
+  step "the edges from validator are labelled {string} and {string}",
+       %{args: [positive, negative]} = context do
+    source = File.read!(line_path(context))
+
+    source =
+      String.replace(source, "not satisfied", negative)
+      |> String.replace(~s(label="satisfied"), ~s(label="#{positive}"))
+
+    File.write!(line_path(context), source)
+    context
+  end
+
+  step "the validator has not been called", context do
+    assert calls(context, "validator") == []
+    context
+  end
+
+  step "the doer has been called four times", context do
+    assert length(calls(context, "doer")) == 4
+    context
+  end
+
+  step "each new work commit contains the work for one task", context do
+    commits = work_commits(context)
+
+    assert Enum.sort(Enum.map(commits, &product_files(context, &1))) == [
+             ["alpha.txt"],
+             ["beta.txt"],
+             ["gamma.txt"]
+           ]
+
+    for commit <- commits do
+      [file] = product_files(context, commit)
+      task = Path.rootname(file)
+
+      assert git!(context.target, ["show", "#{commit}:#{target_prefix(context)}#{file}"]) ==
+               "Work for #{task}"
+    end
+
+    context
+  end
+
+  step "there are two new work commits", context do
+    assert length(work_commits(context)) == 2
+    context
+  end
+
+  step "no new commit contains the work for the first task", context do
+    refute Enum.any?(work_commits(context), &("alpha.txt" in product_files(context, &1)))
+    context
+  end
+
+  step "it reports that the result of validator has no field {string}",
+       %{args: [field]} = context do
+    assert context.status != 0
+    assert context.output =~ "result of validator has no field #{inspect(field)}"
+    context
+  end
+
+  defp line_path(context),
+    do: Path.join(context.factory, "assembly-lines/careful/assembly-line.dot")
+
   defp calls(context, role) do
     Path.wildcard(Path.join(context.chosen_dir, "call-#{role}-*.args"))
   end
 
-  defp run_factory(context, all) do
+  defp run_factory(context) do
     head = git!(context.workspace, ["rev-parse", "HEAD"])
 
     args =
@@ -643,7 +801,6 @@ defmodule FactorySteps do
             ],
         else: args
 
-    args = if all, do: args ++ ["--all"], else: args
     args = args ++ ["--attempts", to_string(context[:attempts] || 3)]
 
     env =
@@ -667,7 +824,7 @@ defmodule FactorySteps do
 
   defp configure(context, role, config) do
     File.write!(
-      Path.join(context.factory, "machines/#{role}/machine.json"),
+      Path.join(context.factory, "assembly-lines/careful/machines/#{role}/machine.json"),
       IO.iodata_to_binary(:json.encode(config))
     )
 
@@ -675,7 +832,11 @@ defmodule FactorySteps do
   end
 
   defp instructions(context, role, text) do
-    File.write!(Path.join(context.factory, "machines/#{role}/AGENTS.md"), text)
+    File.write!(
+      Path.join(context.factory, "assembly-lines/careful/machines/#{role}/AGENTS.md"),
+      text
+    )
+
     context
   end
 

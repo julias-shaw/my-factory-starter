@@ -5,7 +5,7 @@ Build a complete Tetris game that runs in the terminal and starts with `npm star
 
 ## Tasks
 
-1. **Project setup**
+1. **Project setup** — **Done**
    - Initialize a Node.js project in the target directory.
    - Add a `start` script in `package.json` that launches the game.
    - Install only necessary terminal rendering/input packages (e.g., `blessed`, `ink`, or raw `readline`/`stdin` if no dependencies are needed).

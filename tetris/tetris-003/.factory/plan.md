@@ -10,7 +10,7 @@ Build a complete Tetris game that runs in the terminal and starts with `npm star
    - Add a `start` script in `package.json` that launches the game.
    - Install only necessary terminal rendering/input packages (e.g., `blessed`, `ink`, or raw `readline`/`stdin` if no dependencies are needed).
 
-2. **Game board and rendering**
+2. **Game board and rendering** — **Done**
    - Create a fixed-size Tetris playfield (standard 10 columns x 20 rows).
    - Render the board, active piece, borders, score, and controls.
    - Ensure the complete display never exceeds 24 terminal rows.

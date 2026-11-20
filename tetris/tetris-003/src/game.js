@@ -5,6 +5,8 @@ const {
   TETROMINO_TYPES,
   createPiece,
   canPlace,
+  movePiece,
+  rotatePiece,
   softDrop: movePieceDown,
   hardDrop: dropPieceToBottom,
 } = require('./tetrominoes');
@@ -150,6 +152,32 @@ class TetrisGame {
     return this;
   }
 
+  move(dx, dy = 0) {
+    if (this.status !== 'playing' || this.activePiece === null) {
+      return false;
+    }
+
+    const moved = movePiece(this.board, this.activePiece, dx, dy);
+    if (moved === null) {
+      return false;
+    }
+    this.activePiece = moved;
+    return true;
+  }
+
+  rotate(direction = 1) {
+    if (this.status !== 'playing' || this.activePiece === null) {
+      return false;
+    }
+
+    const rotated = rotatePiece(this.board, this.activePiece, direction);
+    if (rotated === null) {
+      return false;
+    }
+    this.activePiece = rotated;
+    return true;
+  }
+
   softDrop() {
     if (this.status !== 'playing') {
       return false;
@@ -177,6 +205,37 @@ class TetrisGame {
     this.score += distance * 2;
     this.lockActivePiece();
     return distance;
+  }
+
+  pause() {
+    if (this.status !== 'playing') {
+      return false;
+    }
+    this.status = 'paused';
+    this.stop();
+    return true;
+  }
+
+  resume(onUpdate = () => {}) {
+    if (this.status !== 'paused') {
+      return false;
+    }
+    this.status = 'playing';
+    this.start(onUpdate);
+    return true;
+  }
+
+  togglePause(onUpdate = () => {}) {
+    if (this.status === 'playing') {
+      return this.pause();
+    }
+    return this.resume(onUpdate);
+  }
+
+  restart(onUpdate = () => {}) {
+    this.reset();
+    this.start(onUpdate);
+    return this;
   }
 
   /** Start a self-rescheduling loop so a level-up changes the very next delay. */

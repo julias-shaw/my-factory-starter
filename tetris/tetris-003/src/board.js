@@ -33,7 +33,14 @@ function nextPiecePreview(type) {
 /**
  * Render a complete 24-row frame: two information rows and a bordered 10x20 board.
  */
-function renderGame({ board, activePiece, nextType, score = 0, level = 1 }) {
+function renderGame({
+  board,
+  activePiece,
+  nextType,
+  score = 0,
+  level = 1,
+  status = 'playing',
+}) {
   const cells = board.map((row) => row.slice());
 
   if (activePiece) {
@@ -52,9 +59,16 @@ function renderGame({ board, activePiece, nextType, score = 0, level = 1 }) {
     (row, index) => `|${row.map(cellText).join('')}|${index < 4 ? `  ${preview[index]}` : ''}`,
   );
 
+  let statusRow = `Score: ${score} | Level: ${level}`;
+  if (status === 'paused') {
+    statusRow += ' | PAUSED - P to resume';
+  } else if (status === 'gameOver') {
+    statusRow = `GAME OVER | Final score: ${score} | R restart | Q quit`;
+  }
+
   return [
-    `Score: ${score} | Level: ${level}`,
-    'Controls: arrows move/drop | Z/X rotate | Space hard drop | P pause | Q quit',
+    statusRow,
+    'Arrows move/drop | Up/X/Z rotate | Space hard | P pause | R restart | Q quit',
     `${horizontalBorder}  Next:`,
     ...boardRows,
     horizontalBorder,

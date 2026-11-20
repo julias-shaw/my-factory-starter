@@ -32,5 +32,6 @@ If your harness doesn't load skills, read the skill's `SKILL.md` and follow it.
 
 ## Checks
 
+The factory requires Elixir 1.18+ and Erlang/OTP 27+ (for the built-in JSON module).
 Run the homework suite with `cd factory && mix test` (excludes `@real-agent`).
 Run real-agent examples deliberately with `cd factory && mix test --only real-agent`.

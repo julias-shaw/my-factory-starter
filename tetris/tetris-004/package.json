@@ -1,0 +1,15 @@
+{
+  "name": "tetris",
+  "version": "1.0.0",
+  "description": "Tetris in the terminal",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

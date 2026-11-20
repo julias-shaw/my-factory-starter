@@ -4,7 +4,7 @@
 import { realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { createApp } from './app.js';
+import { createApp, fitToTerminal } from './app.js';
 import { startInput } from './input.js';
 import { createLoop } from './loop.js';
 import { createRenderer } from './renderer.js';
@@ -39,19 +39,28 @@ export function run({ stdin = process.stdin, stdout = process.stdout } = {}) {
 
   function onResize() {
     renderer.invalidate();
-    renderer.draw(app.view());
+    draw();
+  }
+
+  // Draws the game, or a resize notice (pausing play) if the terminal is
+  // too small to show the whole display.
+  function draw() {
+    const lines = app.view();
+    const fitted = fitToTerminal(lines, stdout.columns, stdout.rows);
+    if (fitted !== lines) app.pause();
+    renderer.draw(fitted);
   }
 
   const app = createApp({ onQuit: () => shutdown(0) });
   loop = createLoop({
     update: (dt) => app.update(dt),
-    render: () => renderer.draw(app.view()),
+    render: draw,
   });
 
   renderer.start();
   stopInput = startInput(stdin, (action) => {
     app.handleAction(action);
-    if (!finished) renderer.draw(app.view());
+    if (!finished) draw();
   });
   stdout.on?.('resize', onResize);
   loop.start();

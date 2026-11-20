@@ -5,7 +5,29 @@ import { EventEmitter } from 'node:events';
 import { parseKeys, startInput } from '../src/input.js';
 import { createLoop } from '../src/loop.js';
 import { composeFrame, createRenderer } from '../src/renderer.js';
-import { createApp } from '../src/app.js';
+import { createApp, fitToTerminal } from '../src/app.js';
+
+test('fitToTerminal passes the view through when it fits and replaces it when too small', () => {
+  const app = createApp({ random: () => 0 });
+  const lines = app.view();
+  const width = Math.max(...lines.map((l) => l.length));
+  assert.equal(fitToTerminal(lines, 80, 24), lines);
+  assert.equal(fitToTerminal(lines, width, 24), lines);
+  assert.equal(fitToTerminal(lines, undefined, undefined), lines);
+
+  for (const [cols, rows] of [[width - 1, 24], [80, 23], [20, 3]]) {
+    const small = fitToTerminal(lines, cols, rows);
+    assert.notEqual(small, lines);
+    assert.equal(small[0], 'Terminal too small'.slice(0, cols));
+    assert.ok(small.length <= rows);
+    for (const line of small) assert.ok(line.length <= cols);
+  }
+
+  app.pause();
+  assert.equal(app.state.paused, true);
+  app.handleAction('pause');
+  assert.equal(app.state.paused, false);
+});
 
 test('parseKeys maps arrows, letters, and multi-key chunks', () => {
   assert.deepEqual(parseKeys('\u001b[D\u001b[C\u001b[A\u001b[B'), ['left', 'right', 'rotate', 'softDrop']);

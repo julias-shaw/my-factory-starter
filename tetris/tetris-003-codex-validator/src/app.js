@@ -15,6 +15,21 @@ const FILLED = '[]';
 const EMPTY = ' .';
 const GHOST = '::';
 
+// Returns `lines` unchanged when they fit a cols x rows terminal (or when the
+// size is unknown), otherwise a short "resize" notice clipped to that size.
+export function fitToTerminal(lines, cols, rows) {
+  if (!cols || !rows) return lines;
+  const needCols = Math.max(...lines.map((line) => line.length));
+  const needRows = lines.length;
+  if (cols >= needCols && rows >= needRows) return lines;
+  return [
+    'Terminal too small',
+    `Need ${needCols}x${needRows}, have ${cols}x${rows}`,
+    'Game paused. Resize, then P',
+    'Q quits',
+  ].slice(0, rows).map((line) => line.slice(0, cols));
+}
+
 export function createApp({ onQuit = () => {}, random, nextPiece } = {}) {
   const game = createGame({ random, nextPiece });
   const state = {
@@ -117,5 +132,9 @@ export function createApp({ onQuit = () => {}, random, nextPiece } = {}) {
     return lines.slice(0, VIEW_ROWS).map((line) => line.slice(0, VIEW_COLS));
   }
 
-  return { state, handleAction, update, view };
+  function pause() {
+    if (!game.state.gameOver) state.paused = true;
+  }
+
+  return { state, handleAction, update, view, pause };
 }

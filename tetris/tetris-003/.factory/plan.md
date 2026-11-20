@@ -20,7 +20,7 @@ Build a complete Tetris game that runs in the terminal and starts with `npm star
    - Implement left/right movement, soft drop, hard drop, rotation (clockwise/counter-clockwise), and collision detection.
    - Handle wall kicks for rotation when adjacent to walls or other blocks.
 
-4. **Game mechanics**
+4. **Game mechanics** — **Done**
    - Implement the falling piece loop with a configurable tick interval that speeds up over time.
    - Implement line clearing and scoring (single, double, triple, tetris).
    - Implement game-over detection when a new piece cannot spawn.

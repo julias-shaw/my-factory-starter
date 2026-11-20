@@ -1,9 +1,16 @@
 'use strict';
 
-const { createBoard, renderGame } = require('./board');
-const { createPiece } = require('./tetrominoes');
+const { renderGame } = require('./board');
+const { TetrisGame } = require('./game');
 
-const board = createBoard();
-const activePiece = createPiece('T');
+const game = new TetrisGame();
 
-process.stdout.write(renderGame({ board, activePiece, score: 0 }));
+function render() {
+  if (process.stdout.isTTY) {
+    process.stdout.write('\x1b[H\x1b[2J');
+  }
+  process.stdout.write(`${renderGame(game)}\n`);
+}
+
+render();
+game.start(render);

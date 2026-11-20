@@ -1,6 +1,7 @@
 import { createTerminal } from './terminal.js';
 import { createKeyParser } from './input.js';
 import { createGame, gravityInterval } from './game.js';
+import { renderLines } from './render.js';
 
 const terminal = createTerminal();
 let exiting = false;
@@ -18,20 +19,8 @@ const ACTIONS = {
   restart: () => game.restart(),
 };
 
-// Placeholder text view; the full board renderer replaces this.
 function render() {
-  const status = game.gameOver ? 'GAME OVER - r to restart' : game.paused ? 'PAUSED' : 'Playing';
-  terminal.draw(
-    [
-      'TETRIS',
-      '',
-      `Score: ${game.score}  Lines: ${game.lines}  Level: ${game.level}`.padEnd(40),
-      `Piece: ${game.current.type}  Next: ${game.next}`.padEnd(40),
-      status.padEnd(40),
-      '',
-      'Press q or Ctrl-C to quit.',
-    ].join('\n'),
-  );
+  terminal.draw(renderLines(game, { color: process.stdout.hasColors?.() ?? true }));
 }
 
 // Re-arm gravity after each step so the interval follows the current level.
@@ -69,5 +58,9 @@ process.on('uncaughtException', (err) => {
 });
 
 terminal.start(handleInput);
+process.stdout.on('resize', () => {
+  terminal.clear();
+  render();
+});
 render();
 scheduleGravity();

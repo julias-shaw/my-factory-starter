@@ -25,9 +25,16 @@ export function createTerminal({ input = process.stdin, output = process.stdout 
     output.write(`${ESC}0m${ESC}?25h${ESC}?1049l`);
   }
 
-  function draw(text) {
-    output.write(`${ESC}H${text}${ESC}J`);
+  // Draw from the top-left, clearing the rest of each line and everything
+  // below so stale content never lingers. Accepts lines or a single string.
+  function draw(lines) {
+    const rows = Array.isArray(lines) ? lines : String(lines).split('\n');
+    output.write(`${ESC}H${rows.join(`${ESC}K\r\n`)}${ESC}K${ESC}J`);
   }
 
-  return { start, stop, draw };
+  function clear() {
+    output.write(`${ESC}2J${ESC}H`);
+  }
+
+  return { start, stop, draw, clear };
 }

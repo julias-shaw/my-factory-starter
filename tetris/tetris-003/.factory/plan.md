@@ -26,7 +26,7 @@ Build a complete Tetris game that runs in the terminal and starts with `npm star
    - Implement game-over detection when a new piece cannot spawn.
    - Implement level progression and display next piece preview.
 
-5. **Controls and UX**
+5. **Controls and UX** — **Done**
    - Map keyboard controls: left, right, rotate, soft drop, hard drop, pause, quit.
    - Show controls/help text within the 24-row budget.
    - Show game-over message and final score; allow restart or quit.

@@ -5,7 +5,7 @@
   - [x] Validator: modified arrow `\u001b[1;5D` produced `right` because only `\u001b[1` was consumed and the trailing `D` was read as a letter. Fixed: `splitKeys` now scans complete CSI (parameter/intermediate bytes through a final byte) and SS3 sequences, buffering incomplete ones across chunks; unknown/modified sequences map to no action. Tests cover modified arrows, function keys, mouse/DA replies at every split point.
 - [x] Implement core Tetris gameplay: piece spawning, movement, rotation, gravity, locking, line clearing, scoring, and game over.
 - [x] Render the board, borders, score, controls, and game-over state within 24 terminal rows.
-- [ ] Verify game mechanics and display sizing, then test startup and interactive controls with `npm start`.
+- [x] Verify game mechanics and display sizing, then test startup and interactive controls with `npm start`.
   - [x] Validator: verification had no recorded results. Verified and recorded:
     - Mechanics: `npm test` passes 36/36, covering spawn/7-bag, wall and block collisions, rotation with wall kicks, gravity, locking, soft/hard drop scoring, line clearing with row shift, level-scaled line scores, level-up speed, game over, pause, and restart.
     - Display size: render tests assert that the playing, paused, and game-over screens fit within 24 rows. A live run in a 24x80 pty drew 22 rows with no scrolling in every state, including game over.

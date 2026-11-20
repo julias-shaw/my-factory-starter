@@ -14,7 +14,7 @@ defmodule FactorySteps do
     File.mkdir_p!(copy)
     ExUnit.Callbacks.on_exit(fn -> File.rm_rf!(workspace) end)
 
-    for path <- ["run", "cli.exs", "lib", "VALIDATOR.md"] do
+    for path <- ["run", "cli.exs", "lib", "machines"] do
       File.cp_r!(Path.join(source, path), Path.join(copy, path))
     end
 
@@ -54,17 +54,32 @@ defmodule FactorySteps do
     File.cp!(agent, chosen)
     File.chmod!(chosen, 0o755)
 
+    for role <- ["planner", "doer", "validator"] do
+      folder = Path.join(context.factory, "machines/#{role}")
+
+      File.write!(
+        Path.join(folder, "machine.json"),
+        IO.iodata_to_binary(:json.encode(%{"harness" => chosen, "provider" => "anthropic"}))
+      )
+    end
+
+    context =
+      if context[:unrelated], do: Map.put(context, :unrelated, unrelated(context)), else: context
+
     Map.merge(context, %{
       harness: chosen,
       chosen_dir: chosen_dir,
       agent: agent,
       agent_dir: agent_dir,
-      agent_env: [{"PATH", agent_dir <> ":" <> System.get_env("PATH")}]
+      agent_env: [
+        {"PATH", agent_dir <> ":" <> System.get_env("PATH")},
+        {"ANTHROPIC_API_KEY", "test-key"}
+      ]
     })
   end
 
-  step "no harness is chosen", context do
-    Map.put(context, :harness, nil)
+  step "no harness is chosen for the validator", context do
+    configure(context, "validator", %{"provider" => "anthropic"})
   end
 
   step "the factory runs one pass", context do
@@ -436,7 +451,10 @@ defmodule FactorySteps do
   end
 
   step "the doer cannot be run", context do
-    Map.put(context, :doer_harness, Path.join(context.workspace, "missing-doer"))
+    configure(context, "doer", %{
+      "harness" => Path.join(context.workspace, "missing-doer"),
+      "provider" => "anthropic"
+    })
   end
 
   step "it reports that it could not run the doer", context do
@@ -498,12 +516,87 @@ defmodule FactorySteps do
   end
 
   step "the validator's lens is testability", context do
-    Map.put(context, :lens, "testability")
+    instructions(context, "validator", "testability")
   end
 
   step "the validator was given {string}", %{args: [lens]} = context do
     [call | _] = calls(context, "validator")
     assert File.read!(call) =~ lens
+    context
+  end
+
+  step "the doer's AGENTS.md says {string}", %{args: [text]} = context do
+    instructions(context, "doer", text)
+  end
+
+  step "the validator's AGENTS.md says {string}", %{args: [text]} = context do
+    instructions(context, "validator", text)
+  end
+
+  step "the doer was given {string}", %{args: [text]} = context do
+    [call | _] = calls(context, "doer")
+    assert File.read!(call) =~ text
+    context
+  end
+
+  step "it was not given {string}", %{args: [text]} = context do
+    [call | _] = calls(context, "validator")
+    refute File.read!(call) =~ text
+    context
+  end
+
+  step "the doer has its own login", context do
+    File.write!(Path.join(context.factory, "machines/doer/auth.json"), "{\"test\":true}")
+    context
+  end
+
+  step "the doer has no login", context do
+    File.rm(Path.join(context.factory, "machines/doer/auth.json"))
+    context
+  end
+
+  step "there is an API key for the doer's provider", context do
+    Map.put(
+      context,
+      :agent_env,
+      List.keystore(context.agent_env, "ANTHROPIC_API_KEY", 0, {"ANTHROPIC_API_KEY", "test-key"})
+    )
+  end
+
+  step "there is no API key for the doer's provider", context do
+    for role <- ["planner", "validator"] do
+      File.write!(Path.join(context.factory, "machines/#{role}/auth.json"), "{}")
+    end
+
+    Map.put(
+      context,
+      :agent_env,
+      List.keystore(context.agent_env, "ANTHROPIC_API_KEY", 0, {"ANTHROPIC_API_KEY", nil})
+    )
+  end
+
+  step "the doer signed in with its own login", context do
+    [call | _] = calls(context, "doer")
+    assert File.read!(String.replace_suffix(call, ".args", ".login")) == "login"
+    context
+  end
+
+  step "the doer signed in with the API key", context do
+    [call | _] = calls(context, "doer")
+    assert File.read!(String.replace_suffix(call, ".args", ".login")) == "api-key"
+    context
+  end
+
+  step "the doer's login is ignored by Git", context do
+    assert git!(context.workspace, ["check-ignore", "factory/machines/doer/auth.json"]) ==
+             "factory/machines/doer/auth.json"
+
+    context
+  end
+
+  step "it reports that the doer cannot sign in", context do
+    assert context.status != 0
+    assert context.output =~ "doer cannot sign in"
     context
   end
 
@@ -551,13 +644,7 @@ defmodule FactorySteps do
         else: args
 
     args = if all, do: args ++ ["--all"], else: args
-    args = if context[:harness], do: args ++ ["--harness", context.harness], else: args
-
-    args =
-      if context[:doer_harness], do: args ++ ["--doer-harness", context.doer_harness], else: args
-
     args = args ++ ["--attempts", to_string(context[:attempts] || 3)]
-    args = if context[:lens], do: args ++ ["--lens", context.lens], else: args
 
     env =
       context.agent_env ++
@@ -576,6 +663,20 @@ defmodule FactorySteps do
       )
 
     Map.merge(context, %{output: output, status: status, before_run_head: head})
+  end
+
+  defp configure(context, role, config) do
+    File.write!(
+      Path.join(context.factory, "machines/#{role}/machine.json"),
+      IO.iodata_to_binary(:json.encode(config))
+    )
+
+    context
+  end
+
+  defp instructions(context, role, text) do
+    File.write!(Path.join(context.factory, "machines/#{role}/AGENTS.md"), text)
+    context
   end
 
   defp plan(context), do: Path.join(context.target, ".factory/plan.md")

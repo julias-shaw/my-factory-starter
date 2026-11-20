@@ -1,0 +1,53 @@
+{
+  "target": "tetris/tetris-003-claude",
+  "completedCommit": "d60000fb34824b076346cd2caf025a8c95e7264a",
+  "configuration": {
+    "planner": {
+      "provider": "openrouter",
+      "model": "moonshotai/kimi-k3.1-pro"
+    },
+    "doer": {
+      "harness": "claude",
+      "model": "claude-opus-5-5"
+    },
+    "validator": {
+      "provider": "openrouter",
+      "model": "moonshotai/kimi-k3.1-pro"
+    }
+  },
+  "doerSessionModels": [
+    "claude-opus-5-5"
+  ],
+  "claudeCodeVersion": "2.1.327",
+  "factoryCodeUnchanged": true,
+  "otherMachineConfigurationsUnchanged": true,
+  "tests": {
+    "passed": 30,
+    "failed": 0
+  },
+  "validatorVerdicts": [
+    {
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "satisfied": true,
+      "findings": []
+    }
+  ],
+  "terminalSmoke": {
+    "exitCode": 0,
+    "pauseObserved": true,
+    "canonicalRestored": true,
+    "echoRestored": true
+  },
+  "note": "Harness and model changed together. This demonstrates independent machine configuration, not an isolated causal comparison between harnesses. Credentials and Claude sessions are ignored by Git."
+}

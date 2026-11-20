@@ -1,0 +1,23 @@
+
+> terminal-tetris@1.0.0 test
+> node --test
+
+✔ each seven-piece bag contains every tetromino exactly once (3.29548ms)
+✔ movement, rotation, and collision respect walls and locked cells (0.721065ms)
+✔ gravity and soft drop move down, while blocked gravity locks without points (0.454679ms)
+✔ hard drop awards two points per row and locks at the lowest valid position (0.440904ms)
+✔ locking a piece clears complete rows and updates score and line count (0.370471ms)
+✔ line clears advance the level and gravity interval (0.306932ms)
+✔ a blocked spawn enters game over and restart resets all state (0.35883ms)
+✔ locking above the board ends the game and quit can be restarted (0.307133ms)
+✔ playing, game-over, and quit screens all fit exactly 24 rows (5.77153ms)
+✔ plain rendering shows board cells and borders without escape sequences (0.463225ms)
+✔ colored blocks do not change the number of rendered rows (0.324726ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 166.923057

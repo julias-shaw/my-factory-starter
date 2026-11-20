@@ -1,0 +1,83 @@
+{
+  "target": "tetris/tetris-003-codex-validator",
+  "completedCommit": "2739ee4ddaa3f403d74175774a0d658615890814",
+  "configuration": {
+    "planner": {
+      "provider": "openrouter",
+      "model": "moonshotai/kimi-k3.1-pro"
+    },
+    "doer": {
+      "harness": "claude",
+      "model": "claude-opus-5-5"
+    },
+    "validator": {
+      "harness": "codex",
+      "model": "gpt-6-sol"
+    }
+  },
+  "validatorPromptSHA256": "3e602d79bdb95ff4a01a24dc2c1b796785a20ac5fc17019fb9a7967c366eedf6",
+  "validatorVerdicts": [
+    {
+      "satisfied": false,
+      "findings": [
+        "Behavioral bug \u00e2\u0080\u0094 src/input.js, startInput/parseKeys: terminal data events can split an arrow sequence. If Escape and `[` arrive in one event and `D` in the next, parseKeys drops the first part and maps `D` to `right` instead of `left`. Keep incomplete escape sequences across events before parsing, and add a test that emits a split arrow sequence."
+      ]
+    },
+    {
+      "satisfied": false,
+      "findings": [
+        "Behavioral bug \u00e2\u0080\u0094 `src/index.js:55` calls `run()` on every import. Because `package.json` points `main` at this file and `run` is exported, importing the package starts a loop, reads stdin, writes terminal control sequences, and registers process handlers. Guard the call so it runs only when `src/index.js` is executed directly. Verify that importing the module has no terminal or process side effects and that `npm start` still launches the game."
+      ]
+    },
+    {
+      "satisfied": false,
+      "findings": [
+        "src/index.js, run/shutdown: Process listeners registered at lines 47\u00e2\u0080\u009353 remain after shutdown; a later uncaught exception reaches a stale handler while shutdown(1) returns early, potentially reporting failure with exit code 0. Remove this run\u00e2\u0080\u0099s signal and exception listeners during shutdown and verify listener counts and exit behavior after quitting."
+      ]
+    },
+    {
+      "satisfied": false,
+      "findings": [
+        "Behavioral bug in src/index.js `run()`/`shutdown()`: `run()` registers SIGINT, SIGTERM, and uncaughtException listeners but `shutdown()` never removes them. A focused check found all three listeners still registered after shutdown (counts changed from [0,0,0] to [1,1,1]); a later signal can be swallowed by the finished run, and a later exception is handled by its stale callback. Remove the listeners during shutdown, using a named exception handler, and add a focused cleanup test. `node --test` passed all 7 existing tests."
+      ]
+    },
+    {
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "satisfied": true,
+      "findings": []
+    }
+  ],
+  "rejections": 4,
+  "tests": {
+    "tests": 25,
+    "pass": 25,
+    "fail": 0,
+    "skipped": 0
+  },
+  "homeworkSuite": {
+    "tests": 51,
+    "failures": 0,
+    "excludedRealAgent": 8
+  },
+  "terminalSmoke": {
+    "exitCode": 0,
+    "pauseObserved": true,
+    "canonicalRestored": true,
+    "echoRestored": true
+  },
+  "adapterCompatibility": "Removed --full-auto, unsupported by installed codex-cli 0.170.0. Machine config now controls sandbox and approval policy.",
+  "environment": "Initial read-only sandbox could not create a user namespace in this container. Validator now uses host execution (danger-full-access) with report-only instructions and approval_policy never.",
+  "resume": "First pass hit the default three-attempt limit. Same target resumed with --attempts 6; acceptance criteria unchanged. The shutdown finding was reported again after resume.",
+  "comparisonLimit": "Validator harness and model changed together, and the planner chose a new plan. This is exploratory, not a controlled model-only comparison."
+}

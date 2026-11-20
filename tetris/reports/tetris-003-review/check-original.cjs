@@ -1,0 +1,20 @@
+const assert = require('node:assert/strict');
+const {resolve} = require('node:path');
+const base=resolve(__dirname,'../../tetris-003');
+const board=require(base+'/src/board');
+const pieces=require(base+'/src/tetrominoes');
+const rules=require(base+'/src/game');
+const {handleKey}=require(base+'/src/index');
+const results=[];
+function check(name,fn){try{fn();results.push({name,pass:true});}catch(e){results.push({name,pass:false,error:e.message});}}
+check('Board dimensions and independent rows',()=>{let b=board.createBoard();assert.equal(b.length,20);assert(b.every(r=>r.length===10));b[0][0]='I';assert.equal(b[1][0],null);});
+check('All seven pieces have four cells and fit at spawn',()=>{assert.equal(pieces.TETROMINO_TYPES.length,7);for(const t of pieces.TETROMINO_TYPES){const p=pieces.createPiece(t);assert.equal(p.cells.length,4);assert(pieces.canPlace(board.createBoard(),p));}});
+check('Wall collision prevents movement',()=>{const b=board.createBoard(),p=pieces.createPiece('O');p.x=0;assert.equal(pieces.movePiece(b,p,-1,0),null);});
+check('Hard drop reaches floor without mutating original',()=>{const b=board.createBoard(),p=pieces.createPiece('O'),old=JSON.stringify(p);const dropped=pieces.hardDrop(b,p);assert.equal(dropped.y,18);assert.equal(JSON.stringify(p),old);assert(b.flat().every(x=>x===null));});
+check('Four rotations preserve occupied cells',()=>{const b=board.createBoard();for(const t of pieces.TETROMINO_TYPES){let p=pieces.createPiece(t);const before=JSON.stringify(p.cells);for(let i=0;i<4;i++)p=pieces.rotatePiece(b,p);assert.equal(JSON.stringify(p.cells),before);}});
+check('Line clear shifts surviving rows and preserves input',()=>{const b=board.createBoard();b[19].fill('I');b[18][0]='T';const old=JSON.stringify(b),r=rules.clearCompletedLines(b);assert.equal(r.linesCleared,1);assert.equal(r.board[19][0],'T');assert(r.board[0].every(x=>x===null));assert.equal(JSON.stringify(b),old);});
+check('Scoring and gravity progression',()=>{assert.deepEqual([1,2,3,4].map(n=>rules.scoreForLines(n,2)),[200,600,1000,1600]);assert(rules.tickIntervalForLevel(2)<rules.tickIntervalForLevel(1));});
+check('Injected randomness reproduces piece sequence',()=>{const a=new rules.TetrisGame({rng:()=>0.5}),b=new rules.TetrisGame({rng:()=>0.5});for(let i=0;i<10;i++)assert.equal(a.takeFromBag(),b.takeFromBag());});
+check('Normal, pause and game-over frames have 24 rows and <=80 columns',()=>{const g=new rules.TetrisGame({rng:()=>0.5});for(const status of ['playing','paused','gameOver']){g.status=status;const text=board.renderGame(g),rows=text.split('\n');assert.equal(rows.length,24);assert(rows.every(r=>r.length<=80));if(status==='paused')assert(text.includes('PAUSED'));if(status==='gameOver')assert(text.includes('GAME OVER'));}});
+check('Key handling maps commands and ignores unknown keys',()=>{let moves=0,quit=0,redraw=0;const fake={move:dx=>moves+=dx};assert(handleKey(fake,{name:'left'},()=>redraw++,()=>quit++));assert.equal(moves,-1);assert.equal(redraw,1);assert.equal(handleKey(fake,{name:'unknown'},()=>redraw++,()=>quit++),false);handleKey(fake,{name:'q'},()=>redraw++,()=>quit++);assert.equal(quit,1);});
+console.log(JSON.stringify({checks:results,passed:results.filter(r=>r.pass).length,failed:results.filter(r=>!r.pass).length},null,2));

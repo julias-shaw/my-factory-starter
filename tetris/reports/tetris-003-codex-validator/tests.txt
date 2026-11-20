@@ -1,0 +1,37 @@
+
+> terminal-tetris@0.1.0 test
+> node --test
+
+✔ npm start plays to game over, restarts, and quits cleanly in 80x24 (2843.915958ms)
+✔ npm start in a too-small terminal pauses and asks for a resize (1231.129426ms)
+✔ there are seven tetrominoes, each four cells in every rotation (2.077557ms)
+✔ 7-bag randomizer yields every piece once per seven draws (0.480377ms)
+✔ pieces move left/right and stop at the walls (2.612164ms)
+✔ rotation cycles through four states and kicks off the wall (0.661154ms)
+✔ gravity drops the piece one row per interval and speeds up with level (0.398834ms)
+✔ hard drop locks the piece at the bottom and spawns the next one (0.593608ms)
+✔ soft drop scores a point per row and locks when blocked (0.415255ms)
+✔ completed lines are cleared and scored by count and level (0.719643ms)
+✔ clearing four lines scores a tetris and levels up every ten lines (3.191365ms)
+✔ game over when a new piece cannot spawn, and restart resets (1.664987ms)
+✔ app routes actions to the game, ignores moves while paused, and shows game over (1.057714ms)
+✔ app view draws the active piece, next preview, and score within 24 rows and 80 columns (1.164383ms)
+✔ fitToTerminal passes the view through when it fits and replaces it when too small (3.867727ms)
+✔ parseKeys maps arrows, letters, and multi-key chunks (2.828861ms)
+✔ startInput dispatches actions and restores the stream (0.775237ms)
+✔ loop passes elapsed time to update and renders each tick (0.6004ms)
+✔ renderer homes the cursor, clears lines, and skips identical frames (0.442165ms)
+✔ app view fits within 24 rows and handles pause/quit (1.485612ms)
+✔ importing src/index.js has no terminal or process side effects (74.669439ms)
+✔ isMainModule only matches when the entry file is executed directly (4.012579ms)
+✔ run() shutdown removes its SIGINT, SIGTERM, and uncaughtException listeners (94.723717ms)
+✔ full display stays within 24 rows and 80 columns in every state (9.80121ms)
+✔ composeFrame never draws more than 24 rows (2.35767ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4569.786626

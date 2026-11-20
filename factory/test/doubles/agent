@@ -3,7 +3,20 @@ IO.read(:stdio, :eof)
 prompt = List.last(System.argv())
 [_, role] = Regex.run(~r/Machine: (planner|doer|validator)/, prompt)
 call = length(Path.wildcard(Path.join(__DIR__, "call-#{role}-*.args"))) + 1
-File.write!(Path.join(__DIR__, "call-#{role}-#{call}.args"), prompt)
+folder = System.fetch_env!("PI_CODING_AGENT_DIR")
+args = System.argv()
+index = Enum.find_index(args, &(&1 == "--append-system-prompt"))
+if is_nil(index) or Enum.at(args, index + 1) != Path.join(folder, "AGENTS.md"),
+  do: raise("machine instructions must come from its configuration folder")
+unless "--no-context-files" in args, do: raise("target instruction discovery must be disabled")
+instructions = File.read!(Path.join(folder, "AGENTS.md"))
+File.write!(Path.join(__DIR__, "call-#{role}-#{call}.args"), instructions <> "\n" <> prompt)
+login = cond do
+  File.regular?(Path.join(folder, "auth.json")) -> "login"
+  System.get_env("ANTHROPIC_API_KEY") not in [nil, ""] -> "api-key"
+  true -> raise("no machine login or API key")
+end
+File.write!(Path.join(__DIR__, "call-#{role}-#{call}.login"), login)
 File.write!(Path.join(__DIR__, "call-#{role}-#{call}.cwd"), File.cwd!())
 setting = fn name ->
   case File.read(Path.join(__DIR__, name)) do

@@ -1,0 +1,9 @@
+{
+  "target": "tetris/tetris-003-reviewed",
+  "exitCode": 0,
+  "canonicalRestored": true,
+  "echoRestored": true,
+  "normal": "+--------------------+\n|                    |\n|                    |\n|      \u2588\u2588            |\n|      \u2588\u2588\u2588\u2588\u2588\u2588        |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n+--------------------+\nScore: 0  Lines: 0  Level: 1  Next: S\nArrows/WASD move  Up/X rotate  Z ccw  Space drop  R restart  Q quit",
+  "paused": "+--------------------+\n|                    |\n|                    |\n|      \u2588\u2588            |\n|      \u2588\u2588\u2588\u2588\u2588\u2588        |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n|                    |\n+--------------------+\nScore: 0  Lines: 0  Level: 1  Next: S\nArrows/WASD move  Up/X rotate  Z ccw  Space drop  R restart  Q quit",
+  "unhandledSequences": []
+}

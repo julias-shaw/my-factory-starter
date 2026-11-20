@@ -1,0 +1,109 @@
+{
+  "sessions": [
+    {
+      "sessionFile": "rollout-2026-11-20T20-39-44-01a1faaf-c023-79a1-9db1-ec97d7b04e13.jsonl",
+      "model": "gpt-6-sol",
+      "usage": {
+        "input_tokens": 83362,
+        "cached_input_tokens": 72064,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2255,
+        "reasoning_output_tokens": 1423,
+        "total_tokens": 85617
+      }
+    },
+    {
+      "sessionFile": "rollout-2026-11-20T20-47-10-01a1fab6-8f66-7292-a410-0e302105ae8d.jsonl",
+      "model": "gpt-6-sol",
+      "usage": {
+        "input_tokens": 92169,
+        "cached_input_tokens": 77696,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1060,
+        "reasoning_output_tokens": 446,
+        "total_tokens": 93229
+      }
+    },
+    {
+      "sessionFile": "rollout-2026-11-20T20-43-45-01a1fab3-6ee5-7071-bb0f-3a6a99183505.jsonl",
+      "model": "gpt-6-sol",
+      "usage": {
+        "input_tokens": 84902,
+        "cached_input_tokens": 72960,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1524,
+        "reasoning_output_tokens": 975,
+        "total_tokens": 86426
+      }
+    },
+    {
+      "sessionFile": "rollout-2026-11-20T20-38-41-01a1faae-cb81-76d0-979e-44e89b215367.jsonl",
+      "model": "gpt-6-sol",
+      "usage": {
+        "input_tokens": 116492,
+        "cached_input_tokens": 94720,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1537,
+        "reasoning_output_tokens": 926,
+        "total_tokens": 118029
+      }
+    },
+    {
+      "sessionFile": "rollout-2026-11-20T20-45-59-01a1fab5-787d-72b1-ac4b-4625b4f94425.jsonl",
+      "model": "gpt-6-sol",
+      "usage": {
+        "input_tokens": 108306,
+        "cached_input_tokens": 86016,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1397,
+        "reasoning_output_tokens": 908,
+        "total_tokens": 109703
+      }
+    },
+    {
+      "sessionFile": "rollout-2026-11-20T20-50-04-01a1fab9-37c5-78e0-b744-e4756997dd8d.jsonl",
+      "model": "gpt-6-sol",
+      "usage": {
+        "input_tokens": 102388,
+        "cached_input_tokens": 82048,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1833,
+        "reasoning_output_tokens": 1334,
+        "total_tokens": 104221
+      }
+    },
+    {
+      "sessionFile": "rollout-2026-11-20T20-41-10-01a1fab1-0e66-7aa2-8fc3-e805ee14ad6d.jsonl",
+      "model": "gpt-6-sol",
+      "usage": {
+        "input_tokens": 124118,
+        "cached_input_tokens": 114048,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2490,
+        "reasoning_output_tokens": 1397,
+        "total_tokens": 126608
+      }
+    },
+    {
+      "sessionFile": "rollout-2026-11-20T20-42-41-01a1fab2-7270-7bf3-b100-945691ec6c75.jsonl",
+      "model": "gpt-6-sol",
+      "usage": {
+        "input_tokens": 91158,
+        "cached_input_tokens": 84352,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1737,
+        "reasoning_output_tokens": 908,
+        "total_tokens": 92895
+      }
+    }
+  ],
+  "totals": {
+    "input_tokens": 802895,
+    "cached_input_tokens": 683904,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 13833,
+    "reasoning_output_tokens": 8317,
+    "total_tokens": 816728
+  },
+  "scope": "Codex validator sessions for this target only; excludes planner and doer, includes rejections and resumed pass. Cached input is a subset of input; do not add it again. No dollar cost was inferred."
+}

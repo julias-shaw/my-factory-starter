@@ -1,0 +1,118 @@
+{
+  "roles": {
+    "planner": {
+      "callsStarted": 10,
+      "callsFinished": 10,
+      "assistantMessages": 25,
+      "messagesMissingUsage": 0,
+      "messagesMissingCost": 0,
+      "input": 23837,
+      "output": 3222,
+      "cacheRead": 23360,
+      "cacheWrite": 0,
+      "reasoning": 1020,
+      "totalTokens": 50419,
+      "reportedCostUSD": 0.077434247,
+      "providerReportedCostMessages": 25
+    },
+    "doer": {
+      "callsStarted": 6,
+      "callsFinished": 6,
+      "assistantMessages": 44,
+      "messagesMissingUsage": 0,
+      "messagesMissingCost": 0,
+      "input": 81932,
+      "output": 28574,
+      "cacheRead": 225856,
+      "cacheWrite": 0,
+      "reasoning": 12182,
+      "totalTokens": 336362,
+      "reportedCostUSD": 0.507633626,
+      "providerReportedCostMessages": 44
+    },
+    "validator": {
+      "callsStarted": 5,
+      "callsFinished": 5,
+      "assistantMessages": 28,
+      "messagesMissingUsage": 0,
+      "messagesMissingCost": 0,
+      "input": 59609,
+      "output": 11640,
+      "cacheRead": 164352,
+      "cacheWrite": 0,
+      "reasoning": 5284,
+      "totalTokens": 235601,
+      "reportedCostUSD": 0.231340898,
+      "providerReportedCostMessages": 28
+    }
+  },
+  "totals": {
+    "callsStarted": 21,
+    "callsFinished": 21,
+    "assistantMessages": 97,
+    "messagesMissingUsage": 0,
+    "messagesMissingCost": 0,
+    "input": 165378,
+    "output": 43436,
+    "cacheRead": 413568,
+    "cacheWrite": 0,
+    "reasoning": 18486,
+    "totalTokens": 622382,
+    "reportedCostUSD": 0.816408771,
+    "providerReportedCostMessages": 97
+  },
+  "verdicts": [
+    {
+      "call": "ea029597-ff55-4c17-892d-ce16948b68b2",
+      "time": "2026-11-20T19:59:52.917005+00:00",
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "call": "51322643-7853-4ce8-a8d4-bd4f25676f3d",
+      "time": "2026-11-20T20:01:23.677542+00:00",
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "call": "1d12d7f1-7414-48ea-be24-ef8622e2b25b",
+      "time": "2026-11-20T20:02:34.564897+00:00",
+      "satisfied": false,
+      "findings": [
+        "src/index.js (`render` and the noninteractive branch): when stdin is non-TTY but stdout is a TTY, `render()` emits `\\x1b[?25l` to hide the cursor, but the branch exits without calling `stop()` or emitting `\\x1b[?25h`, leaving the user's terminal cursor hidden. Reproduced with `script -q -c 'node src/index.js < /dev/null' /dev/null`: output contained the hide sequence but no restore sequence. Restrict cursor hiding to interactive setup (or restore it before every noninteractive exit), then verify both TTY/non-TTY stdin combinations in a PTY."
+      ]
+    },
+    {
+      "call": "7bceb61a-a96d-4667-941f-db4a1ed2b444",
+      "time": "2026-11-20T20:03:26.856225+00:00",
+      "satisfied": true,
+      "findings": []
+    },
+    {
+      "call": "ec6a947c-39dd-40d8-bdba-d5acb498447f",
+      "time": "2026-11-20T20:06:33.026277+00:00",
+      "satisfied": true,
+      "findings": []
+    }
+  ],
+  "rejections": 1,
+  "findingsCount": 1,
+  "failedCalls": [
+    {
+      "kind": "end",
+      "call": "dcbba065-d041-4984-b6c7-c8fa218be316",
+      "role": "doer",
+      "time": "2026-11-20T20:05:06.209535+00:00",
+      "status": 1,
+      "elapsedSeconds": null,
+      "failure": "Observer stdout BlockingIOError while forwarding agent_end; end timestamp recorded during recovery."
+    }
+  ],
+  "elapsedSeconds": 448.508648,
+  "notes": [
+    "Tokens and costs cover factory machine calls only, excluding report creation and orchestration.",
+    "input, output, cacheRead and cacheWrite are raw pi fields; totalTokens is retained directly. Reasoning tokens are not added again.",
+    "Costs are the emitted usage.cost.total values, not reconstructed from public rates and not a billing invoice.",
+    "Original run usage was not retained; no historical ratio can be calculated."
+  ]
+}

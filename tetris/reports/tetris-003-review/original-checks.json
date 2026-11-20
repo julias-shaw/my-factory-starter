@@ -1,0 +1,46 @@
+{
+  "checks": [
+    {
+      "name": "Board dimensions and independent rows",
+      "pass": true
+    },
+    {
+      "name": "All seven pieces have four cells and fit at spawn",
+      "pass": true
+    },
+    {
+      "name": "Wall collision prevents movement",
+      "pass": true
+    },
+    {
+      "name": "Hard drop reaches floor without mutating original",
+      "pass": true
+    },
+    {
+      "name": "Four rotations preserve occupied cells",
+      "pass": true
+    },
+    {
+      "name": "Line clear shifts surviving rows and preserves input",
+      "pass": true
+    },
+    {
+      "name": "Scoring and gravity progression",
+      "pass": true
+    },
+    {
+      "name": "Injected randomness reproduces piece sequence",
+      "pass": true
+    },
+    {
+      "name": "Normal, pause and game-over frames have 24 rows and <=80 columns",
+      "pass": true
+    },
+    {
+      "name": "Key handling maps commands and ignores unknown keys",
+      "pass": true
+    }
+  ],
+  "passed": 10,
+  "failed": 0
+}

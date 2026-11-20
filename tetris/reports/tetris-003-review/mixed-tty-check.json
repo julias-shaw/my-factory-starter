@@ -1,0 +1,8 @@
+{
+  "command": "node src/index.js < /dev/null (stdout is an 80x24 PTY)",
+  "exitCode": 0,
+  "hidesCursor": false,
+  "restoresCursor": false,
+  "passed": true,
+  "outputBytes": 677
+}

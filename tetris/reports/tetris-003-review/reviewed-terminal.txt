@@ -1,0 +1,24 @@
++--------------------+
+|                    |
+|                    |
+|      ██            |
+|      ██████        |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
++--------------------+
+Score: 0  Lines: 0  Level: 1  Next: S
+Arrows/WASD move  Up/X rotate  Z ccw  Space drop  R restart  Q quit

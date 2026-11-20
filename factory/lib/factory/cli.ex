@@ -90,10 +90,7 @@ defmodule Factory.CLI do
         strict: [
           seed: :string,
           target: :string,
-          harness: :string,
-          doer_harness: :string,
           attempts: :integer,
-          lens: :string,
           all: :boolean
         ]
       )
@@ -117,13 +114,12 @@ defmodule Factory.CLI do
       true ->
         target = Path.expand(opts[:target])
         seed = Path.expand(opts[:seed])
-        harness = resolve_harness(opts[:harness] || "pi")
+        machines = Map.new(~w(planner doer validator), &{&1, machine(&1)})
+        Enum.each(machines, fn {role, machine} -> check_login!(role, machine) end)
 
         config = %{
-          harness: harness,
-          doer_harness: resolve_harness(opts[:doer_harness] || harness),
+          machines: machines,
           attempts: opts[:attempts] || 3,
-          lens: opts[:lens] || File.read!(Path.expand("../../VALIDATOR.md", __DIR__)),
           all: opts[:all] || false
         }
 
@@ -141,8 +137,77 @@ defmodule Factory.CLI do
     end
   end
 
-  defp resolve_harness(harness) do
-    if String.contains?(harness, "/"), do: Path.expand(harness), else: harness
+  defp machine(role) do
+    folder = Path.expand("../../machines/#{role}", __DIR__)
+    settings = folder |> Path.join("machine.json") |> File.read!() |> :json.decode()
+    harness = settings["harness"] || "pi"
+    harness = if String.contains?(harness, "/"), do: Path.expand(harness, folder), else: harness
+    %{folder: folder, harness: harness, settings: settings}
+  end
+
+  defp login_file(machine) do
+    if Path.basename(machine.harness) == "claude", do: ".credentials.json", else: "auth.json"
+  end
+
+  defp api_key(machine) do
+    case Path.basename(machine.harness) do
+      "codex" ->
+        "CODEX_API_KEY"
+
+      "claude" ->
+        "ANTHROPIC_API_KEY"
+
+      _ ->
+        machine.settings["api_key_env"] ||
+          case machine.settings["provider"] || "anthropic" do
+            "anthropic" -> "ANTHROPIC_API_KEY"
+            "openai" -> "OPENAI_API_KEY"
+            "google" -> "GEMINI_API_KEY"
+            provider -> String.upcase(provider) <> "_API_KEY"
+          end
+    end
+  end
+
+  defp check_login!(role, machine) do
+    unless File.regular?(Path.join(machine.folder, login_file(machine))) or
+             System.get_env(api_key(machine)) not in [nil, ""] do
+      fail(
+        "#{role} cannot sign in: copy its login into #{machine.folder} or set #{api_key(machine)}"
+      )
+    end
+  end
+
+  defp harness_config(machine) do
+    folder = machine.folder
+    model = if machine.settings["model"], do: ["--model", machine.settings["model"]], else: []
+
+    case Path.basename(machine.harness) do
+      "claude" ->
+        {["--print", "--setting-sources", "user"] ++ model, [{"CLAUDE_CONFIG_DIR", folder}]}
+
+      "codex" ->
+        {["exec", "--skip-git-repo-check", "-c", "project_doc_max_bytes=0"] ++
+           model, [{"CODEX_HOME", folder}]}
+
+      _ ->
+        args = [
+          "--print",
+          "--no-session",
+          "--no-context-files",
+          "--append-system-prompt",
+          Path.join(folder, "AGENTS.md")
+        ]
+
+        args =
+          if Path.basename(machine.harness) == "pi", do: args ++ ["--mode", "json"], else: args
+
+        provider =
+          if machine.settings["provider"],
+            do: ["--provider", machine.settings["provider"]],
+            else: []
+
+        {args ++ provider ++ model, [{"PI_CODING_AGENT_DIR", folder}]}
+    end
   end
 
   defp run(target, seed, config) do
@@ -197,16 +262,10 @@ defmodule Factory.CLI do
 
   defp planner(target, seed, config, instruction) do
     answer =
-      invoke(target, config.harness, "planner", """
+      invoke(target, config.machines["planner"], "planner", """
       #{paths(target, seed)}
-      You keep the plan. Do not implement product code.
       #{instruction}
       Finish with a single line of JSON containing the boolean field "complete".
-      "complete" is true only when every task in the plan has been implemented,
-      committed and marked done. Writing a new plan is not completion: report false.
-      Any task without an explicit done marker means "complete": false, even if
-      existing code looks sufficient. Do not perform unfinished tasks yourself;
-      leave their implementation and verification to the doer and validator.
       """)
 
     read_result!(answer, "planner")
@@ -219,24 +278,15 @@ defmodule Factory.CLI do
 
   defp attempt(target, seed, config, remaining, findings) do
     work_result =
-      invoke(target, config.doer_harness, "doer", """
+      invoke(target, config.machines["doer"], "doer", """
       #{paths(target, seed)}
-      Read the plan and implement only its first unfinished task.
       Validator findings: #{IO.iodata_to_binary(:json.encode(findings))}
-      Record each finding as a subtask of the task in progress and address it.
-      Do not add top-level tasks or mark the task done; the planner does that after commit.
       Finish with a single line of JSON describing the work you did.
       """)
 
     answer =
-      invoke(target, config.harness, "validator", """
+      invoke(target, config.machines["validator"], "validator", """
       #{paths(target, seed)}
-      Check only the current task's work supplied below, through this lens:
-      #{config.lens}
-      Read the plan to identify its first unfinished task. Judge the supplied work
-      against that task, not the whole finished product. Do not reject missing
-      features assigned to later tasks. Earlier completed tasks are out of scope.
-      Report findings only. Do not change the work or the plan.
       Current task's work (changes since the last commit):
       #{work(target)}
       Finish with a single line of JSON containing boolean "satisfied" and array "findings".
@@ -258,7 +308,6 @@ defmodule Factory.CLI do
     """
     Seed file: #{inspect(seed)}
     Plan file: #{inspect(Path.join(target, ".factory/plan.md"))}
-    Work only in this target. Do not stage or commit files; the factory handles Git.
     """
   end
 
@@ -294,11 +343,12 @@ defmodule Factory.CLI do
 
   defp report(result), do: IO.puts(IO.iodata_to_binary(:json.encode(result)))
 
-  defp invoke(target, harness, role, prompt) do
+  defp invoke(target, machine, role, prompt) do
+    harness = machine.harness
     IO.puts(:stderr, "Calling #{role} (#{harness}) in #{target}...")
     prompt = "Machine: #{role}\n" <> prompt
     events = Path.basename(harness) == "pi"
-    agent_args = ["--print", "--no-session"] ++ if(events, do: ["--mode", "json"], else: [])
+    {agent_args, env} = harness_config(machine)
 
     {answer, status} =
       try do
@@ -306,6 +356,7 @@ defmodule Factory.CLI do
           "sh",
           ["-c", "exec \"$@\" </dev/null", "factory-agent", harness] ++ agent_args ++ [prompt],
           cd: target,
+          env: env,
           stderr_to_stdout: true,
           into: %Factory.AgentOutput{events: events}
         )

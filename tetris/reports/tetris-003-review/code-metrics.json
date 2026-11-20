@@ -1,0 +1,27 @@
+{
+  "original": {
+    "productionFiles": 4,
+    "productionLines": 717,
+    "testFiles": 0,
+    "testLines": 0,
+    "files": {
+      "tetris/tetris-003/src/board.js": 84,
+      "tetris/tetris-003/src/game.js": 276,
+      "tetris/tetris-003/src/index.js": 111,
+      "tetris/tetris-003/src/tetrominoes.js": 246
+    }
+  },
+  "reviewed": {
+    "productionFiles": 3,
+    "productionLines": 482,
+    "testFiles": 2,
+    "testLines": 209,
+    "files": {
+      "tetris/tetris-003-reviewed/src/game.js": 340,
+      "tetris/tetris-003-reviewed/src/index.js": 91,
+      "tetris/tetris-003-reviewed/src/renderer.js": 51,
+      "tetris/tetris-003-reviewed/test/game.test.js": 154,
+      "tetris/tetris-003-reviewed/test/renderer.test.js": 55
+    }
+  }
+}

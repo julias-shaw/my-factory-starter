@@ -1,0 +1,74 @@
+
+> terminal-tetris@1.0.0 start
+> node src/index.js
+
+[?25l[2J[H+--------------------+
+|      [44m  [0m            |
+|      [44m  [0m[44m  [0m[44m  [0m        |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
++--------------------+
+Score: 0  Lines: 0  Level: 1  Next: S
+Arrows/WASD move  Up/X rotate  Z ccw  Space drop  R restart  Q quit[2J[H+--------------------+
+|                    |
+|      [44m  [0m            |
+|      [44m  [0m[44m  [0m[44m  [0m        |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
++--------------------+
+Score: 0  Lines: 0  Level: 1  Next: S
+Arrows/WASD move  Up/X rotate  Z ccw  Space drop  R restart  Q quit[2J[H+--------------------+
+|                    |
+|                    |
+|      [44m  [0m            |
+|      [44m  [0m[44m  [0m[44m  [0m        |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
++--------------------+
+Score: 0  Lines: 0  Level: 1  Next: S
+Arrows/WASD move  Up/X rotate  Z ccw  Space drop  R restart  Q quit[0m[?25h

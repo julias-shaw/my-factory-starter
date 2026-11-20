@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tetris 003 · Validator comparison</title><style>
+:root{--paper:#f5f4ee;--ink:#17313a;--muted:#53696d;--line:#d1dcd6;--accent:#066e66;--wash:#e3efe9;--gold:#f6e7be}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,sans-serif}main{max-width:1160px;padding:52px 26px 80px;margin:auto}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(38px,6vw,68px);line-height:1.08;letter-spacing:-.045em;max-width:900px}h2{font-size:30px;line-height:1.2}h3{font-size:20px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.15em;text-transform:uppercase;font-weight:800}.lede{font-size:20px;max-width:900px;color:var(--muted)}nav{display:flex;flex-wrap:wrap;gap:22px;padding:18px 0;border-bottom:1px solid var(--line)}a{color:var(--accent);text-underline-offset:3px}section{margin-top:50px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:28px 0}.card,.panel,details,.finding{border:1px solid var(--line);border-radius:12px;background:white;padding:22px}.card strong{display:block;font-size:31px;line-height:1.2}.card span,.muted{color:var(--muted);font-size:14px}.callout{background:var(--wash);border-left:4px solid var(--accent);padding:22px;border-radius:0 12px 12px 0}.caution{background:var(--gold);border-left-color:#af7914}.callout p:last-child{margin-bottom:0}.table{overflow:auto;border:1px solid var(--line);border-radius:12px;background:white}table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:15px 18px}thead{background:var(--wash)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.terminal{background:#102b33;color:#e4f3e9;border-radius:12px;overflow:hidden}.terminal header{padding:15px 18px;background:#1c3d45}pre{font:13px/1.45 ui-monospace,monospace;overflow:auto;white-space:pre}.terminal pre{padding:18px;margin:0;min-height:460px}code{font-family:ui-monospace,monospace;font-size:.9em}pre.command{background:#17313a;color:white;border-radius:10px;padding:22px}details{margin:14px 0}summary{cursor:pointer;font-weight:650}.barrow{display:grid;grid-template-columns:90px 1fr 55px;gap:14px;align-items:center;margin:15px 0}.track{height:16px;background:#e1e8e4;border-radius:6px;overflow:hidden}.track div{height:100%;background:var(--accent)}.finding{margin:16px 0}.finding p{font-size:14px}footer{margin-top:45px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:13px}@media(max-width:760px){.cards,.grid{grid-template-columns:1fr}main{padding:30px 18px}.terminal pre{font-size:11px}}@media print{details{display:block}body{font-size:11px}main{padding:0}.cards{grid-template-columns:repeat(4,1fr)}a{color:inherit}}
+</style></head><body><main>
+<p class="eyebrow">Homework 003 · A fresh factory generation · November 20, 2026</p>
+<h1>What changed with a broader validator?</h1>
+<p class="lede">The updated build separates game rules from scheduling, includes 11 executable tests, and keeps its score visible in a 24-row terminal. One cursor-lifecycle correction is directly traceable to validator feedback. Historical token spend for the original run was not retained.</p>
+<nav><a href="#quality">Code quality</a><a href="#findings">Validator findings</a><a href="#spend">Tokens &amp; cost</a><a href="#terminal">Terminal checks</a><a href="#method">Method &amp; evidence</a></nav>
+<div class="cards"><div class="card"><strong>11 vs 0</strong><span>Included automated tests · updated vs original</span></div><div class="card"><strong>1</strong><span>Actionable finding recorded in the new run</span></div><div class="card"><strong>622,382</strong><span>New-run tokens, including cached tokens and retry</span></div><div class="card"><strong>$0.82</strong><span>New-run provider-reported cost</span></div></div>
+<div class="callout"><p><b>Assessment:</b> the new generation has a cleaner boundary between game rules and the terminal, and leaves repeatable tests behind. It also has fewer optional gameplay features and a less accessible terminal entry point for unit testing. These are observed tradeoffs, not a numerical quality score or proof that the validator caused every difference.</p></div>
+<section id="quality"><h2>Code quality, with evidence</h2><div class="table"><table><thead><tr><th>Dimension</th><th>Original · testability + usability</th><th>Updated · four review lenses</th></tr></thead><tbody>
+<tr><th>Core independence</th><td><code>TetrisGame</code> imports <code>board.js</code>, which also implements rendering. Its <code>start</code>/<code>stop</code> methods use global timers.</td><td><code>game.js</code> has no imports or host I/O/timer calls. The terminal adapter drives <code>tick()</code> and supplies time. A concrete improvement in dependency separation.</td></tr>
+<tr><th>Determinism</th><td>Injectable <code>rng</code>; piece helpers are callable independently of the CLI.</td><td>Injectable <code>random</code>; core actions and board snapshots are callable without terminal setup. Both generations passed deterministic-sequence checks.</td></tr>
+<tr><th>Clarity and organization</th><td>Separate modules for board rendering, tetrominoes, game state, and CLI. Explicit SRS kick tables and named scoring/timing constants.</td><td>Three production modules: game, renderer, CLI. Direct domain action methods, but most rule/shape logic is concentrated in one game module. Smaller organization does not itself establish better design.</td></tr>
+<tr><th>Boundary testability</th><td>CLI is import-safe and exports <code>handleKey</code>, which can be checked with a fake game.</td><td>CLI initializes at module scope and exports no input handler. Core and renderer are easy to exercise, but CLI behavior currently needs process/PTY checks.</td></tr>
+<tr><th>Retained automated tests</th><td>No <code>npm test</code> script or included game tests. Ten external comparison checks passed.</td><td><code>npm test</code> runs 11 passing Node tests. Deterministic fixtures cover mechanics and rendering; ten external comparison checks also passed.</td></tr>
+<tr><th>Test quality limits</th><td>Prior agent assertions were transient; the new external checks are retained with this report, not installed as the original game's suite.</td><td>Tests run without real terminals, waits, or external services. Some tests group several scenarios and mutate public state directly; CLI cursor cleanup remains outside the included automated suite. Test count is not a coverage metric.</td></tr>
+<tr><th>Live display</th><td>A 24-line frame followed by a newline scrolls away its score row in an exactly 24-row terminal.</td><td>TTY rendering omits the trailing newline; score, controls, borders, and board remain visible. Frame-length assertions alone would not establish this.</td></tr>
+<tr><th>Gameplay tradeoffs</th><td>Pause/resume, next-piece shape preview, SRS kick tables, 80 ms minimum gravity.</td><td>No pause action; next piece shown as a letter, simple wall kicks, 50 ms minimum gravity, and WASD bindings. These are generation differences; the seed does not require those particular extras.</td></tr>
+</tbody></table></div>
+<p class="muted">Inspect sources: <a href="tetris-003/src/game.js">original game</a> · <a href="tetris-003/src/index.js">original CLI</a> · <a href="tetris-003-reviewed/src/game.js">updated game</a> · <a href="tetris-003-reviewed/src/index.js">updated CLI</a> · <a href="tetris-003-reviewed/src/renderer.js">updated renderer</a> · <a href="tetris-003-reviewed/test/game.test.js">mechanics tests</a> · <a href="tetris-003-reviewed/test/renderer.test.js">renderer tests</a>.</p>
+<details><summary>Code-size context, not a quality score</summary><div class="table"><table><thead><tr><th>Generation</th><th>Production JS files</th><th>Production lines</th><th>Test files</th><th>Test lines</th></tr></thead><tbody><tr><th>Original</th><td>4</td><td>717</td><td>0</td><td>0</td></tr><tr><th>Updated</th><td>3</td><td>482</td><td>2</td><td>209</td></tr></tbody></table></div><p>Physical lines include comments and blanks. Counts exclude dependencies, report checks, and generated metadata. See <a href="reports/tetris-003-review/code-metrics.json">file-level measurements</a>.</p></details></section>
+<section id="findings"><h2>What the validator actually changed</h2><p>The updated prompt reviews boundaries, design, local clarity, and test trustworthiness in that order, consolidating overlapping problems into actionable findings. The run recorded <b>5 validator verdicts, 1 rejection, and 1 finding</b>.</p>
+<article class="finding"><h3>Finding 1</h3><p>src/index.js (`render` and the noninteractive branch): when stdin is non-TTY but stdout is a TTY, `render()` emits `\x1b[?25l` to hide the cursor, but the branch exits without calling `stop()` or emitting `\x1b[?25h`, leaving the user&#x27;s terminal cursor hidden. Reproduced with `script -q -c &#x27;node src/index.js &lt; /dev/null&#x27; /dev/null`: output contained the hide sequence but no restore sequence. Restrict cursor hiding to interactive setup (or restore it before every noninteractive exit), then verify both TTY/non-TTY stdin combinations in a PTY.</p></article>
+<div class="callout"><p><b>Observed correction:</b> cursor hiding moved out of <code>render()</code> and into interactive setup. With non-TTY stdin and TTY stdout, the final program prints its frame and exits without hiding the cursor. The doer recorded the correction as a completed subtask under the renderer/input task.</p><p>The original plan contains no recorded validator-origin findings. The new core separation and test task were already planned or implemented before a rejection; they cannot be attributed to this feedback alone.</p></div>
+<p><a href="reports/tetris-003-review/usage-summary.json">Verdicts and per-call records</a> · <a href="tetris-003-reviewed/.factory/plan.md">updated plan and finding subtask</a> · <a href="tetris-003/.factory/plan.md">original completed plan</a> · <a href="reports/tetris-003-review/validator-instructions.md">validator prompt snapshot</a>.</p></section>
+<section id="spend"><h2>Token spend: measured new run, unavailable baseline</h2><div class="callout caution"><p><b>An exact cost comparison is not possible.</b> The original factory used <code>--no-session</code> and discarded usage events. No per-run usage ledger was found. Its token count and dollar spend are <b>unknown, not zero</b>; no cost difference, percentage saving, or value-per-dollar claim can be calculated.</p></div>
+<div class="table"><table><thead><tr><th>Metric</th><th>Original</th><th>Updated</th></tr></thead><tbody><tr><th>Tokens, including cache</th><td>Unavailable</td><td>622,382</td></tr><tr><th>Provider-reported cost</th><td>Unavailable</td><td>$0.816409</td></tr><tr><th>Recorded machine invocations</th><td>No retained usage ledger</td><td>21 started / 21 ended</td></tr><tr><th>Assistant messages with usage</th><td>Unavailable</td><td>97; 0 missing usage records</td></tr></tbody></table></div>
+<h3 style="margin-top:28px">Where the new run spent tokens</h3><div class="barrow"><span>Planner</span><div class="track"><div style="width:8.10%"></div></div><b>8.1%</b></div><div class="barrow"><span>Doer</span><div class="track"><div style="width:54.04%"></div></div><b>54.0%</b></div><div class="barrow"><span>Validator</span><div class="track"><div style="width:37.85%"></div></div><b>37.9%</b></div>
+<div class="table"><table><thead><tr><th>Machine</th><th>Calls</th><th>Input</th><th>Cache read</th><th>Output</th><th>Total tokens</th><th>Reported USD</th></tr></thead><tbody><tr><th>Planner</th><td>10</td><td>23,837</td><td>23,360</td><td>3,222</td><td>50,419</td><td>$0.077434</td></tr><tr><th>Doer</th><td>6</td><td>81,932</td><td>225,856</td><td>28,574</td><td>336,362</td><td>$0.507634</td></tr><tr><th>Validator</th><td>5</td><td>59,609</td><td>164,352</td><td>11,640</td><td>235,601</td><td>$0.231341</td></tr><tr><th>Total</th><td>21</td><td>165,378</td><td>413,568</td><td>43,436</td><td>622,382</td><td>$0.816409</td></tr></tbody></table></div>
+<p>Numbers are pi's emitted usage fields, summed once per assistant <code>message_end</code>. Cache writes: 0. Reported reasoning tokens: 18,486; these are not added again to the total. Cached tokens count as tokens but do not cost the same as fresh input. Costs use emitted <code>usage.cost.total</code>, not a reconstruction from public prices; all 97 usage records identify provider-reported totals. This is telemetry, not a billing invoice.</p>
+<p><b>Scope and interruption:</b> these totals cover factory machine calls only. They exclude this assistant's orchestration, code inspection, report generation, and terminal checks. One observer pipe-write failure interrupted the final test task after files were written. The target was resumed, and the totals include both that attempt and the resume. The observer was corrected to use blocking stdout. Wall-clock time was about 7.5 minutes including the interruption; it is not a clean speed benchmark.</p>
+<p><a href="reports/tetris-003-review/usage.jsonl">Raw usage ledger</a> · <a href="reports/tetris-003-review/usage-summary.json">Aggregated usage</a> · <a href="reports/tetris-003-review/observer-pi.py">Observer source</a> · <a href="reports/tetris-003-review/summarize-usage.py">Aggregation script</a>.</p></section>
+<section id="terminal"><h2>Checked in a real 80 × 24 PTY</h2><p>Both commands launched, rendered, and quit with exit code 0 after Q. Canonical input and echo settings were restored. Captures below show the visible terminal after two seconds, reconstructed from its cursor operations; colored backgrounds are represented as blocks. Random piece positions are not a comparison metric.</p>
+<div class="grid"><article class="terminal"><header>Original · score row scrolled away</header><pre>Arrows move/drop | Up/X/Z rotate | Space hard | P pause | R restart | Q quit
++--------------------+  Next:
+|....................|  [][]
+|....................|    [][]
+|......[]............|
+|......[][][]........|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
+|....................|
++--------------------+
+</pre></article><article class="terminal"><header>Updated · full display remains visible</header><pre>+--------------------+
+|                    |
+|                    |
+|      ██            |
+|      ██████        |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
+|                    |
++--------------------+
+Score: 0  Lines: 0  Level: 1  Next: S
+Arrows/WASD move  Up/X rotate  Z ccw  Space drop  R restart  Q quit</pre></article></div>
+<p>The original P key also showed its pause state; the updated build does not implement pause. Pure-frame checks covered game-over rendering, but these captures are startup/quit smoke checks, not complete human playthroughs.</p>
+<p><a href="reports/tetris-003-review/original-terminal.json">Original PTY results</a> · <a href="reports/tetris-003-review/reviewed-terminal.json">Updated PTY results</a> · <a href="reports/tetris-003-review/mixed-tty-check.json">Cursor-fix reproduction check</a> · <a href="reports/tetris-003-review/capture-terminal.py">Capture and screen-reconstruction script</a>.</p>
+<details><summary>Original: independent checks · 10 passed / 0 failed</summary><ul><li>Pass — Board dimensions and independent rows</li><li>Pass — All seven pieces have four cells and fit at spawn</li><li>Pass — Wall collision prevents movement</li><li>Pass — Hard drop reaches floor without mutating original</li><li>Pass — Four rotations preserve occupied cells</li><li>Pass — Line clear shifts surviving rows and preserves input</li><li>Pass — Scoring and gravity progression</li><li>Pass — Injected randomness reproduces piece sequence</li><li>Pass — Normal, pause and game-over frames have 24 rows and &lt;=80 columns</li><li>Pass — Key handling maps commands and ignores unknown keys</li></ul></details><details><summary>Updated: independent checks · 10 passed / 0 failed</summary><ul><li>Pass — Board dimensions and independent rows</li><li>Pass — All seven pieces have four cells and fit at spawn</li><li>Pass — Wall collision prevents movement</li><li>Pass — Hard drop locks at floor and awards distance points</li><li>Pass — Four rotations preserve occupied cells</li><li>Pass — Line clear shifts surviving rows</li><li>Pass — One-to-four-line scoring and gravity progression</li><li>Pass — Injected randomness reproduces piece sequence</li><li>Pass — Normal and game-over frames have 24 rows and &lt;=80 columns</li><li>Pass — Board snapshots cannot mutate core state</li></ul></details>
+<details><summary>Included updated-suite output · 11 passing tests</summary><pre>
+&gt; terminal-tetris@1.0.0 test
+&gt; node --test
+
+✔ each seven-piece bag contains every tetromino exactly once (3.29548ms)
+✔ movement, rotation, and collision respect walls and locked cells (0.721065ms)
+✔ gravity and soft drop move down, while blocked gravity locks without points (0.454679ms)
+✔ hard drop awards two points per row and locks at the lowest valid position (0.440904ms)
+✔ locking a piece clears complete rows and updates score and line count (0.370471ms)
+✔ line clears advance the level and gravity interval (0.306932ms)
+✔ a blocked spawn enters game over and restart resets all state (0.35883ms)
+✔ locking above the board ends the game and quit can be restarted (0.307133ms)
+✔ playing, game-over, and quit screens all fit exactly 24 rows (5.77153ms)
+✔ plain rendering shows board cells and borders without escape sequences (0.463225ms)
+✔ colored blocks do not change the number of rendered rows (0.324726ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 166.923057
+</pre></details>
+<p>Comparison checks adapt to each generation's public API; the ten checks per build are selected examples, not identical suites or coverage measurements. One comparison fixture was corrected to use the new I-piece rotation offset; no generated game code was edited during analysis. <a href="reports/tetris-003-review/check-original.cjs">Original check source</a> · <a href="reports/tetris-003-review/check-reviewed.mjs">Updated check source</a>.</p></section>
+<section id="method"><h2>How to interpret this experiment</h2><ul>
+<li>The baseline is the preserved <code>tetris/tetris-003</code> at commit <code>3d5b3b17344a</code>. The new target is <code>tetris/tetris-003-reviewed</code>, completed at <code>1fd01bcca669</code>. Original target contents were verified unchanged.</li>
+<li>Both use the same saved seed and Kimi K3.1 Pro for game implementation. The original plan was initially produced with Kimi K2.7 Code before the model switch; the new plan was produced with K3.1 Pro. Planner/doer instructions and factory code were held fixed during this new run. The updated validator prompt is the intended change.</li>
+<li>The planner independently chose four tasks for the new generation versus six for the original, and explicitly included a test task before the first review. Plans, model variation, prompt history, and the observer retry prevent a controlled causal or cost comparison.</li>
+<li>Only the factory's machines wrote the generated game. Analysis added report artifacts and independent checks outside the targets. Validator approval is not proof of defect-free software or comprehensive test coverage.</li>
+<li>The console trace records machine summaries and tool status, not every tool's full arguments/output. Oversized transport payload fragments from the observer failure are omitted in the sanitized console log. The usage ledger contains metrics and parsed result objects, not login data.</li>
+</ul><p><a href="reports/tetris-003-review/manifest.json">Run manifest and SHA-256 hashes</a> · <a href="reports/tetris-003-review/console-log.txt">Sanitized console log</a> · <a href="reports/tetris-003-review/planner-instructions.md">Planner snapshot</a> · <a href="reports/tetris-003-review/doer-instructions.md">Doer snapshot</a>.</p>
+<h3>Try either result</h3><pre class="command">npm --prefix tetris/tetris-003 start
+npm --prefix tetris/tetris-003-reviewed start
+npm --prefix tetris/tetris-003-reviewed test</pre><p>Run games in separate terminals and use their displayed controls. Regenerating this exact target resumes its completed plan; a new generation needs a fresh target path.</p></section>
+<footer>Standalone local report · no external assets, network requests, or runtime dependencies. Sources, checks, prompts, and telemetry are preserved beside the report. Token savings remain undetermined because the original spend was not retained.</footer>
+</main></body></html>

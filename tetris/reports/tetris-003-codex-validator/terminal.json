@@ -1,0 +1,11 @@
+{
+  "target": "tetris/tetris-003-codex-validator",
+  "exitCode": 0,
+  "canonicalRestored": true,
+  "echoRestored": true,
+  "normal": "+--------------------+\n| . . . . . . . . . .| SCORE\n| . . .[][] . . . . .| 0\n| . . . .[][] . . . .|\n| . . . . . . . . . .| LINES\n| . . . . . . . . . .| 0\n| . . . . . . . . . .|\n| . . . . . . . . . .| LEVEL\n| . . . . . . . . . .| 1\n| . . . . . . . . . .|\n| . . . . . . . . . .| NEXT\n| . . . . . . . . . .| [][][][]\n| . . . . . . . . . .|\n| . . . . . . . . . .|\n| . . . . . . . . . .| Time 1s\n| . . . . . . . . . .|\n| . . . . . . . . . .|\n| . . . . . . . . . .|\n| . . . . . . . . . .|\n| . . .:::: . . . . .|\n| . . . .:::: . . . .|\n+--------------------+\n\nArrows/WASD move+rotate  Space drop  P pause  R restart  Q quit",
+  "paused": "+--------------------+\n| . . . . . . . . . .| SCORE\n| . . .[][] . . . . .| 0\n| . . . .[][] . . . .|\n| . . . . . . . . . .| LINES\n| . . . . . . . . . .| 0\n| . . . . . . . . . .|\n| . . . . . . . . . .| LEVEL\n| . . . . . . . . . .| 1\n| . . . . . . . . . .|\n| . . . . . . . . . .| NEXT\n| . . . . . . . . . .| [][][][]\n| . . . . . . . . . .|\n| . . . . . . . . . .|\n| . . . . . . . . . .| Time 1s\n| . . . . . . . . . .|\n| . . . . . . . . . .| PAUSED\n| . . . . . . . . . .|\n| . . . . . . . . . .|\n| . . .:::: . . . . .|\n| . . . .:::: . . . .|\n+--------------------+\nPAUSED - press P to resume\nArrows/WASD move+rotate  Space drop  P pause  R restart  Q quit",
+  "unhandledSequences": [
+    "\u001b[J"
+  ]
+}

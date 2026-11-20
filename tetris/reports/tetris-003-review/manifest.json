@@ -1,0 +1,41 @@
+{
+  "baselineCommit": "3d5b3b17344ab8dc9236cf089ee3d604f4949229",
+  "target": "tetris/tetris-003-reviewed",
+  "timestamp": "2026-11-20T19:59:22.787412+00:00",
+  "sha256": {
+    "factory/lib/factory/cli.ex": "bc75df0b138744650d6f31550e2c61e34f229b8679c7385b2d3112d0309fe975",
+    "factory/machines/planner/AGENTS.md": "ee1793b625056bf5c14d4b91c36e0d48ef067a66e0bca9877a45391ae9528c6a",
+    "factory/machines/doer/AGENTS.md": "f8ec73990e39bec03555a9c74af6a3addab658687e8c169465fea017350b4c13",
+    "factory/machines/validator/AGENTS.md": "3e602d79bdb95ff4a01a24dc2c1b796785a20ac5fc17019fb9a7967c366eedf6",
+    "tetris/spec.md": "954e7c55c0630de5620794e01c96b477dfa79e82ec399249027e78af658c8313",
+    "factory/machines/planner/machine.json": "c39070d43e05704eccbd3319a6e55f17cab3b610c2516fdccd47574c10272f53",
+    "factory/machines/doer/machine.json": "c39070d43e05704eccbd3319a6e55f17cab3b610c2516fdccd47574c10272f53",
+    "factory/machines/validator/machine.json": "c39070d43e05704eccbd3319a6e55f17cab3b610c2516fdccd47574c10272f53"
+  },
+  "originalUsage": "unavailable: no-session and usage fields not persisted",
+  "originalFilesSHA256": {
+    "tetris/tetris-003/.factory/plan.md": "c463ea9e8b2bc4be8d6be0024fc1b2dbd56d2be1577d6dfb40c1319dd6f4a29f",
+    "tetris/tetris-003/package-lock.json": "7994b07cca8e9eefb6c979809bd06e710e7c40eee5e1721955c8d9cbe2076574",
+    "tetris/tetris-003/package.json": "acb08e795cc53934177e82b79203fc3b362b5b7b0ede481d64079f12e9d5bf45",
+    "tetris/tetris-003/src/board.js": "595227a16a885fc07ff3a833f01501a8b19f272216d49b744628d4940f49489c",
+    "tetris/tetris-003/src/game.js": "70d8e5a50d6506858c27c450d72405b28a3ed31fb5ebb4e78f5e5d1c70c3edf9",
+    "tetris/tetris-003/src/index.js": "e722125e66cf42ac55b99a5667e3875626c47a909116d6306194a7566a720316",
+    "tetris/tetris-003/src/tetrominoes.js": "8efd962c305e67ab10f04fcb045862477a63789c7af4ffa5f1eb314cf51d7560"
+  },
+  "reviewedFilesSHA256": {
+    "tetris/tetris-003-reviewed/.factory/plan.md": "48472dd71f4ce35feb0aec9e85489723d57b5a028896775291705c64b2b19015",
+    "tetris/tetris-003-reviewed/.gitignore": "7235e5971ed6c301f5336eab9c042765faf2dba575b149ef8281ea68a424692e",
+    "tetris/tetris-003-reviewed/package.json": "a50dadc9a3940a05814dc6556c128415cbf386ef07170d89a9e498937a57b648",
+    "tetris/tetris-003-reviewed/src/game.js": "5faff10bae30eda10f7f02b7663522ad110364e5c4e93d1fa28b0df41e3f2c84",
+    "tetris/tetris-003-reviewed/src/index.js": "1985bf87350adc8de3bbad6dcbde0aba8787e6a8e56b2ad90529821a3596948f",
+    "tetris/tetris-003-reviewed/src/renderer.js": "66b6af1200d75a3dc332fdc5e487469e403eed1cb676408a03ca2e70b54e18b5",
+    "tetris/tetris-003-reviewed/test/game.test.js": "5374ac18f38cbd6df8e555a55bbe4b1cb1ff9571704dc2da238d55ac20bbb836",
+    "tetris/tetris-003-reviewed/test/renderer.test.js": "b337bf89211be386ddbdee2c3656d7e2f71869c631e2373b1d11934865c9e670"
+  },
+  "reviewedCommit": "1fd01bcca6691c661e0d5673dab48ae74ae395a9",
+  "originalTargetUnchanged": true,
+  "newRunInputsUnchanged": true,
+  "nodeVersion": "v24.22.3",
+  "observerInterruption": "One stdout BlockingIOError; stdout changed to blocking mode, then resumed the same target. All captured usage, including interrupted attempt, is included.",
+  "rawConsoleSHA256": "7a710e22b7f86584ccf1ed19594932d46357886c9f9b499b0657f15736b97110"
+}

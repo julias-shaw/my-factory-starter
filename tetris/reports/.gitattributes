@@ -1,0 +1,4 @@
+# Captured terminal bytes and console transcripts are evidence, not source code.
+*.raw binary
+*.log -whitespace
+*.txt -whitespace

@@ -49,6 +49,7 @@ function handleInput(data) {
   render();
 }
 
+process.stdin.on('end', () => exit(0));
 process.on('SIGINT', () => exit(0));
 process.on('SIGTERM', () => exit(0));
 process.on('uncaughtException', (err) => {

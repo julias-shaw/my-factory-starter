@@ -31,6 +31,6 @@ Build a complete Tetris game that runs in the terminal and starts with `npm star
    - Show controls/help text within the 24-row budget.
    - Show game-over message and final score; allow restart or quit.
 
-6. **Build and verify**
+6. **Build and verify** — **Done**
    - Run `npm install` and `npm start` to verify the game launches.
    - Verify display fits 24 rows and all core mechanics work.

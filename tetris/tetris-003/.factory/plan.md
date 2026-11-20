@@ -15,7 +15,7 @@ Build a complete Tetris game that runs in the terminal and starts with `npm star
    - Render the board, active piece, borders, score, and controls.
    - Ensure the complete display never exceeds 24 terminal rows.
 
-3. **Tetrominoes and movement**
+3. **Tetrominoes and movement** — **Done**
    - Implement all seven Tetromino shapes (I, O, T, S, Z, J, L) with spawn positions and colors.
    - Implement left/right movement, soft drop, hard drop, rotation (clockwise/counter-clockwise), and collision detection.
    - Handle wall kicks for rotation when adjacent to walls or other blocks.

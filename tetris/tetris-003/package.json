@@ -1,0 +1,10 @@
+{
+  "name": "tetris-terminal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A terminal-based Tetris game",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  }
+}

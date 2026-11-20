@@ -9,12 +9,14 @@ export const CLEAR_SCREEN = `${ESC}2J`;
 export const HOME = `${ESC}H`;
 export const CLEAR_LINE = `${ESC}K`;
 export const RESET = `${ESC}0m`;
+export const MAX_ROWS = 24;
 
 // Turns a list of text lines into one terminal frame: each line is drawn
 // from the top-left and cleared to end of line, then leftover rows below
-// are cleared so shrinking frames leave no residue.
+// are cleared so shrinking frames leave no residue. At most MAX_ROWS lines
+// are drawn and no newline follows the last one, so the frame never scrolls.
 export function composeFrame(lines) {
-  const body = lines.map((line) => `${line}${RESET}${CLEAR_LINE}`).join('\r\n');
+  const body = lines.slice(0, MAX_ROWS).map((line) => `${line}${RESET}${CLEAR_LINE}`).join('\r\n');
   return `${HOME}${body}${ESC}J`;
 }
 

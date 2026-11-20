@@ -141,3 +141,37 @@ test('run() shutdown removes its SIGINT, SIGTERM, and uncaughtException listener
   assert.deepEqual(during, [1, 1, 1]);
   assert.deepEqual(after, [0, 0, 0]);
 });
+
+test('full display stays within 24 rows and 80 columns in every state', async () => {
+  const { createApp, VIEW_ROWS, VIEW_COLS, CONTROLS } = await import('../src/app.js');
+  const app = createApp();
+  const check = (label) => {
+    const view = app.view();
+    assert.equal(view.length, VIEW_ROWS, label);
+    for (const line of view) assert.ok(line.length <= VIEW_COLS, `${label}: ${line}`);
+    assert.equal(view[0], view[21], `${label}: top and bottom borders drawn`);
+    assert.ok(view.includes(CONTROLS), `${label}: controls shown`);
+    const frame = composeFrame(view);
+    assert.ok(frame.split('\r\n').length <= 24, `${label}: frame rows`);
+    assert.ok(!frame.endsWith('\n'), `${label}: no trailing newline`);
+    return view;
+  };
+  check('playing');
+  assert.ok(check('playing').some((l) => l.includes('SCORE')));
+  app.handleAction('pause');
+  assert.ok(check('paused').some((l) => l.includes('PAUSED - press P')));
+  app.handleAction('pause');
+  app.state.game.state.score = 999999999999;
+  app.state.game.state.lines = 99999;
+  app.state.elapsedMs = 99999999;
+  check('large numbers');
+  for (let i = 0; i < 50 && !app.state.game.state.gameOver; i += 1) app.handleAction('hardDrop');
+  assert.equal(app.state.game.state.gameOver, true);
+  assert.ok(check('game over').some((l) => l.includes('GAME OVER - press R')));
+});
+
+test('composeFrame never draws more than 24 rows', () => {
+  const frame = composeFrame(Array.from({ length: 30 }, (_, i) => `row${i}`));
+  assert.equal(frame.split('\r\n').length, 24);
+  assert.ok(!frame.includes('row24'));
+});

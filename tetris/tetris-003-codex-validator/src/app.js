@@ -5,6 +5,12 @@ import { BOARD_HEIGHT, BOARD_WIDTH, ROTATIONS, createGame, pieceCells } from './
 
 export { BOARD_HEIGHT, BOARD_WIDTH };
 
+// The whole display (borders, board, side panel, status, controls) must fit
+// a standard 80x24 terminal.
+export const VIEW_ROWS = 24;
+export const VIEW_COLS = 80;
+export const CONTROLS = 'Arrows/WASD move+rotate  Space drop  P pause  R restart  Q quit';
+
 const FILLED = '[]';
 const EMPTY = ' .';
 const GHOST = '::';
@@ -107,8 +113,8 @@ export function createApp({ onQuit = () => {}, random, nextPiece } = {}) {
     const rows = [border, ...boardRows().map((r) => `|${r}|`), border];
     const lines = rows.map((row, i) => (side[i] ? `${row}${side[i]}` : row));
     lines.push(statusMessage());
-    lines.push('Arrows/WASD move+rotate  Space drop  P pause  R restart  Q quit');
-    return lines;
+    lines.push(CONTROLS);
+    return lines.slice(0, VIEW_ROWS).map((line) => line.slice(0, VIEW_COLS));
   }
 
   return { state, handleAction, update, view };
